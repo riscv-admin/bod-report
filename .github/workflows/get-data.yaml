@@ -1,0 +1,69 @@
+name: Daily Data Fetch
+
+on:
+  schedule:
+    # This will run every hour"
+    - cron: "0 * * * *"
+  workflow_dispatch:
+
+jobs:
+  data-fetch:
+    name: Collect Data from Jira
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Set short SHA
+        run: echo "SHORT_SHA=$(echo ${GITHUB_SHA::7})" >> $GITHUB_ENV
+
+      - name: Get current date
+        run: echo "CURRENT_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+
+      - name: Get current time
+        run: echo "CURRENT_TIME=$(date +'%H%M%S')" >> $GITHUB_ENV
+
+      - name: Build Container Image
+        id: build_container
+        uses: docker/build-push-action@v6
+        with:
+          load: true
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
+          tags: riscvintl/bod-jira-data-image:latest
+
+      - name: Run Container
+        id: run_container
+        if: steps.build_container.outcome == 'success'
+        run: docker run --rm -e JIRA_TOKEN=${{ secrets.JIRATOKEN }} -v ./:/usr/src/app/ riscvintl/bod-jira-data-image:latest
+
+      - name: Upload Data
+        if: steps.run_container.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+            name: spec-data.csv
+            path: ${{ github.workspace }}/*.csv
+
+      - name: Create Release
+        if: steps.run_container.outcome == 'success' && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule')
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: false
+          tag_name: bod-jira-data-${{ env.SHORT_SHA }}-${{ env.CURRENT_DATE }}-${{ env.CURRENT_TIME }}
+          name: ${{ env.CURRENT_TIME }}
+          body: |
+            This release was created by: ${{ github.event.sender.login }}
+            Release Notes: ${{ github.event.inputs.release_notes }}
+          files: |
+            ${{ github.workspace }}/*.csv
+
+        env:
+            GITHUB_TOKEN: ${{ secrets.GHTOKEN }}
