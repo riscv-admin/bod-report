@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>RISC-V Specification Dashboard</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+            overflow-x: hidden;
+        }
+        .on-track {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .exposed {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .late {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .completed {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        .table-container {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            overflow-x: auto;
+        }
+        table {
+            margin-top: 10px;
+            width: 100%;
+            max-width: 1200px;
+            background-color: white;
+            border-radius: 10px;
+            overflow: hidden;
+            table-layout: fixed;
+            font-size: 13px;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+            vertical-align: middle;
+        }
+        th {
+            background-color: #f1f1f1;
+            text-align: center;
+            vertical-align: middle;
+            white-space: normal;
+        }
+        .narrow-column {
+            width: 120px;
+        }
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        h2 {
+            margin-bottom: 10px;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        }
+        #header {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 10px;
+        }
+        #save-button {
+            font-size: 12px;  /* Smaller button size */
+        }
+        #last-updated,
+        #countdown {
+            font-size: 12px;
+            color: #888;  /* Slightly darker color */
+            text-align: center;
+            margin-top: 5px;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.9.0/dist/html-to-image.min.js"></script>
+    <script>
+        function saveAsImage() {
+            var node = document.querySelector('.table-container');
+            var now = new Date();
+            var formattedDate = now.getFullYear() + '-' +
+                                ('0' + (now.getMonth() + 1)).slice(-2) + '-' +
+                                ('0' + now.getDate()).slice(-2) + '_' +
+                                ('0' + now.getHours()).slice(-2) + '-' +
+                                ('0' + now.getMinutes()).slice(-2) + '-' +
+                                ('0' + now.getSeconds()).slice(-2);
+            var fileName = 'RISC-V_Specification_Dashboard_' + formattedDate + '.png';
+            htmlToImage.toPng(node, {
+                quality: 1,
+                pixelRatio: 2 // Increase pixel ratio for higher quality
+            })
+            .then(function (dataUrl) {
+                var link = document.createElement('a');
+                link.href = dataUrl;
+                link.download = fileName;
+                link.click();
+            })
+            .catch(function (error) {
+                console.error('Error generating image:', error);
+            });
+        }
+
+        // Refresh the page every 5 minutes (300,000 milliseconds)
+        function startCountdown() {
+            var countdownElement = document.getElementById('countdown');
+            var timeLeft = 300; // 5 minutes in seconds
+
+            var countdownTimer = setInterval(function() {
+                var minutes = Math.floor(timeLeft / 60);
+                var seconds = timeLeft % 60;
+                countdownElement.textContent = 'Page reloads in ' + minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+
+                timeLeft--;
+
+                if (timeLeft < 0) {
+                    clearInterval(countdownTimer);
+                    location.reload();
+                }
+            }, 1000);
+        }
+
+        window.onload = startCountdown;
+    </script>
+</head>
+<body>
+    <div class="container">
+        <img src="{{ url_for('static', filename='riscv.png') }}" alt="RISC-V Logo" class="img-fluid mx-auto d-block" style="max-width: 200px; margin-top: 20px;">
+        <h2 class="text-center">Specification Dashboard</h2>
+        <div id="header">
+            <button id="save-button" class="btn btn-primary" onclick="saveAsImage()">Save as Image</button>
+        </div>
+        <div class="table-container">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Specification</th>
+                        <th>Working<br>Towards</th>
+                        <th>Next<br>Phase</th>
+                        <th class="narrow-column">ISA or<br>NON-ISA?</th>
+                        <th class="narrow-column">Baseline<br>Ratification Quarter</th>
+                        <th class="narrow-column">Target<br>Ratification Quarter</th>
+                        <th class="narrow-column">Ratification<br>Progress</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for index, row in data.iterrows() %}
+                    {% set current_phase, next_phase = row['Status']|calculate_progress %}
+                    <tr class="{{ (row['Ratification Progress']|default('')).replace(' ', '-').lower() }}">
+                        <td><a href="{{ row['Jira URL'] }}" target="_blank">{{ row['Summary'] }}</a></td>
+                        <td>{{ current_phase }}</td>
+                        <td>{{ next_phase }}</td>
+                        <td class="narrow-column">{{ row['ISA or NON-ISA?'] }}</td>
+                        <td class="narrow-column">{{ row['Baseline Ratification Quarter'] }}</td>
+                        <td class="narrow-column">{{ row['Target Ratification Quarter'] }}</td>
+                        <td class="narrow-column">{{ row['Ratification Progress'] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div id="last-updated">
+            Last updated: {{ last_updated }}
+        </div>
+        <div id="countdown"></div>
+    </div>
+</body>
+</html>
