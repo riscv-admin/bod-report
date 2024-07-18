@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RISC-V Specification Dashboard for BoD</title>
-    <!--link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon"-->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
     <style>
         body {
@@ -29,7 +30,8 @@
         }
         .table-container {
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            align-items: center;
             width: 100%;
             overflow-x: auto;
         }
@@ -70,11 +72,15 @@
         h2 {
             margin-bottom: 10px;
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            text-align: center;
         }
         #header {
             display: flex;
             justify-content: flex-end;
             margin-bottom: 10px;
+            width: 100%;
+            max-width: 1200px;
+            align-self: center;
         }
         #save-button {
             font-size: 12px;  /* Smaller button size */
@@ -85,6 +91,19 @@
             color: #888;  /* Slightly darker color */
             text-align: center;
             margin-top: 5px;
+        }
+        .checkmark {
+            color: green;
+            font-size: 1.5em;
+        }
+        .current-phase {
+            color: #1E90FF;  /* Less bright blue */
+            font-size: 0.85em;  /* Smaller text size */
+            white-space: nowrap;  /* Prevent wrapping */
+        }
+        .upcoming-phase {
+            color: lightgray;
+            font-size: 1.5em;
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.9.0/dist/html-to-image.min.js"></script>
@@ -135,11 +154,13 @@
 
         window.onload = startCountdown;
     </script>
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
 </head>
 <body>
     <div class="container">
-        <!-- img src="{{ url_for('static', filename='riscv.png') }}" alt="RISC-V Logo" class="img-fluid mx-auto d-block" style="max-width: 200px; margin-top: 20px;"-->
-        <h2 class="text-center">Specification Dashboard</h2>
+        <h2>Specification Dashboard</h2>
         <div id="header">
             <button id="save-button" class="btn btn-primary" onclick="saveAsImage()">Save as Image</button>
         </div>
@@ -148,12 +169,14 @@
                 <thead>
                     <tr>
                         <th>Specification</th>
-                        <th>Working<br>Towards</th>
-                        <th>Next<br>Phase</th>
-                        <th class="narrow-column">ISA or<br>NON-ISA?</th>
-                        <th class="narrow-column">Baseline<br>Ratification Quarter</th>
-                        <th class="narrow-column">Target<br>Ratification Quarter</th>
-                        <th class="narrow-column">Ratification<br>Progress</th>
+                        <th title="Planning">Planning</th>
+                        <th title="Development">Development</th>
+                        <th title="Freeze">Freeze</th>
+                        <th title="Ratification-Ready">Ratification-Ready</th>
+                        <th class="narrow-column">ISA or NON-ISA?</th>
+                        <th class="narrow-column">Baseline Ratification Quarter</th>
+                        <th class="narrow-column">Target Ratification Quarter</th>
+                        <th class="narrow-column">Ratification Progress</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -161,8 +184,19 @@
                     {% set current_phase, next_phase = row['Status']|calculate_progress %}
                     <tr class="{{ (row['Ratification Progress']|default('')).replace(' ', '-').lower() }}">
                         <td><a href="{{ row['Jira URL'] }}" target="_blank">{{ row['Summary'] }}</a></td>
-                        <td>{{ current_phase }}</td>
-                        <td>{{ next_phase }}</td>
+                        {% for phase in ['Planning', 'Development', 'Freeze', 'Ratification-Ready'] %}
+                            {% if phase == current_phase %}
+                                <td class="current-phase">In Progress</td>  <!-- In Progress text for current phase -->
+                            {% elif ['Planning', 'Development', 'Freeze', 'Ratification-Ready'].index(phase) < ['Planning', 'Development', 'Freeze', 'Ratification-Ready'].index(current_phase) %}
+                                <td class="checkmark">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="green" width="24px" height="24px"><path d="M0 0h24v24H0z" fill="none"/><path d="M9 16.2l-4.2-4.2-1.4 1.4 5.6 5.6 12-12-1.4-1.4z"/></svg>
+                                </td>  <!-- Green check mark for completed phases -->
+                            {% else %}
+                                <td class="upcoming-phase">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="lightgray" width="24px" height="24px"><circle cx="6" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="18" cy="12" r="2"/></svg>
+                                </td>  <!-- Light gray three dots for future phases -->
+                            {% endif %}
+                        {% endfor %}
                         <td class="narrow-column">{{ row['ISA or NON-ISA?'] }}</td>
                         <td class="narrow-column">{{ row['Baseline Ratification Quarter'] }}</td>
                         <td class="narrow-column">{{ row['Target Ratification Quarter'] }}</td>
