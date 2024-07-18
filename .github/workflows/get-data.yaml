@@ -2,8 +2,8 @@ name: Daily Data Fetch
 
 on:
   schedule:
-    # This will run every hour"
-    - cron: "0 * * * *"
+    # This will run twice a day at 12:00 AM and 12:00 PM
+    - cron: "0 0,12 * * *"
   workflow_dispatch:
 
 jobs:
