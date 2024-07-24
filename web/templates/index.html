@@ -46,18 +46,30 @@
             font-size: 13px;
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
             border: 1px solid #ddd;
+            position: relative;
         }
         th, td {
             padding: 8px;
             text-align: center;
             border-bottom: 1px solid #ddd;
             vertical-align: middle;
+            position: relative;
         }
         th {
             background-color: #f1f1f1;
             text-align: center;
             vertical-align: middle;
             white-space: normal;
+        }
+        .resizer {
+            display: inline-block;
+            width: 5px;
+            height: 100%;
+            position: absolute;
+            right: 0;
+            top: 0;
+            cursor: col-resize;
+            user-select: none;
         }
         .narrow-column {
             width: 120px;
@@ -105,6 +117,47 @@
             color: lightgray;
             font-size: 1.5em;
         }
+        .timeline {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            position: relative;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #ddd;
+        }
+        .timeline-point {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #ddd;
+            position: relative;
+            z-index: 1;
+        }
+        .timeline-point.current {
+            background: #007bff;
+        }
+        .timeline-point span {
+            position: absolute;
+            top: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        .highlight-baseline {
+            background-color: #e0f7fa;
+            color: #006064;
+            font-weight: bold;
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.9.0/dist/html-to-image.min.js"></script>
     <script>
@@ -133,6 +186,72 @@
             });
         }
 
+        function getCurrentQuarter() {
+            const month = new Date().getMonth() + 1;
+            return Math.ceil(month / 3);
+        }
+
+        function getDaysLeftInQuarter() {
+            const now = new Date();
+            const currentQuarter = getCurrentQuarter();
+            let endOfQuarter;
+            switch (currentQuarter) {
+                case 1:
+                    endOfQuarter = new Date(now.getFullYear(), 2, 31); // March 31
+                    break;
+                case 2:
+                    endOfQuarter = new Date(now.getFullYear(), 5, 30); // June 30
+                    break;
+                case 3:
+                    endOfQuarter = new Date(now.getFullYear(), 8, 30); // September 30
+                    break;
+                case 4:
+                    endOfQuarter = new Date(now.getFullYear(), 11, 31); // December 31
+                    break;
+            }
+            const timeDiff = endOfQuarter - now;
+            return Math.ceil(timeDiff / (1000 * 60 * 60 * 24)); // Convert milliseconds to days
+        }
+
+        function highlightCurrentQuarter() {
+            const currentQuarter = getCurrentQuarter();
+            const daysLeft = getDaysLeftInQuarter();
+            const timelinePoints = document.querySelectorAll('.timeline-point');
+            timelinePoints.forEach((point, index) => {
+                if (index + 1 === currentQuarter) {
+                    point.classList.add('current');
+                    const span = point.querySelector('span');
+                    span.textContent += ` (${daysLeft} days left)`;
+                }
+            });
+        }
+
+        function sortTable() {
+            const table = document.querySelector('table tbody');
+            const rows = Array.from(table.rows);
+
+            rows.sort((a, b) => {
+                const progressA = a.className;
+                const progressB = b.className;
+                const quarterA = a.cells[7].textContent;
+                const quarterB = b.cells[7].textContent;
+
+                if (progressA < progressB) return -1;
+                if (progressA > progressB) return 1;
+                if (quarterA < quarterB) return -1;
+                if (quarterA > quarterB) return 1;
+                return 0;
+            });
+
+            rows.forEach(row => table.appendChild(row));
+        }
+
+        window.onload = function() {
+            startCountdown();
+            highlightCurrentQuarter();
+            sortTable();
+        }
+
         // Refresh the page every 1 hour
         function startCountdown() {
             var countdownElement = document.getElementById('countdown');
@@ -152,7 +271,37 @@
             }, 1000);
         }
 
-        window.onload = startCountdown;
+        // Function to add resizers to table headers
+        function addResizers() {
+            const table = document.querySelector('table');
+            const cols = table.querySelectorAll('th');
+            cols.forEach((col) => {
+                const resizer = document.createElement('div');
+                resizer.className = 'resizer';
+                col.appendChild(resizer);
+                resizer.addEventListener('mousedown', initResize);
+            });
+        }
+
+        let startX, startWidth;
+
+        function initResize(e) {
+            startX = e.clientX;
+            startWidth = parseInt(document.defaultView.getComputedStyle(e.target.parentElement).width, 10);
+            document.documentElement.addEventListener('mousemove', doResize);
+            document.documentElement.addEventListener('mouseup', stopResize);
+        }
+
+        function doResize(e) {
+            e.target.parentElement.style.width = (startWidth + e.clientX - startX) + 'px';
+        }
+
+        function stopResize(e) {
+            document.documentElement.removeEventListener('mousemove', doResize);
+            document.documentElement.removeEventListener('mouseup', stopResize);
+        }
+
+        document.addEventListener('DOMContentLoaded', addResizers);
     </script>
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
@@ -161,6 +310,12 @@
 <body>
     <div class="container">
         <h2>Specification Dashboard</h2>
+        <div class="timeline">
+            <div class="timeline-point"><span>Q1</span></div>
+            <div class="timeline-point"><span>Q2</span></div>
+            <div class="timeline-point"><span>Q3</span></div>
+            <div class="timeline-point"><span>Q4</span></div>
+        </div>
         <div id="header">
             <button id="save-button" class="btn btn-primary" onclick="saveAsImage()">Save as Image</button>
         </div>
@@ -174,7 +329,7 @@
                         <th title="Freeze">Freeze</th>
                         <th title="Ratification-Ready">Ratification-Ready</th>
                         <th class="narrow-column">ISA or NON-ISA?</th>
-                        <th class="narrow-column">Baseline Ratification Quarter</th>
+                        <th class="narrow-column highlight-baseline">Baseline Ratification Quarter</th>
                         <th class="narrow-column">Target Ratification Quarter</th>
                         <th class="narrow-column">Ratification Progress</th>
                     </tr>
@@ -198,7 +353,7 @@
                             {% endif %}
                         {% endfor %}
                         <td class="narrow-column">{{ row['ISA or NON-ISA?'] }}</td>
-                        <td class="narrow-column">{{ row['Baseline Ratification Quarter'] }}</td>
+                        <td class="narrow-column highlight-baseline">{{ row['Baseline Ratification Quarter'] }}</td>
                         <td class="narrow-column">{{ row['Target Ratification Quarter'] }}</td>
                         <td class="narrow-column">{{ row['Ratification Progress'] }}</td>
                     </tr>
