@@ -153,6 +153,12 @@
             font-size: 12px;
             white-space: nowrap;
         }
+        .phase-duration {
+            font-size: 10px;
+            color: #666;
+            margin-top: 5px;
+            display: block;
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.9.0/dist/html-to-image.min.js"></script>
     <script>
@@ -242,22 +248,15 @@
             const rows = Array.from(table.rows);
 
             rows.sort((a, b) => {
-                const progressA = a.cells[8].textContent.toLowerCase();
-                const progressB = b.cells[8].textContent.toLowerCase();
-                const completedA = countCompletedPhases(a);
-                const completedB = countCompletedPhases(b);
+                const progressOrder = { "late": 1, "exposed": 2, "on-track": 3, "completed": 4 };
+                const progressA = progressOrder[a.className] || 5;
+                const progressB = progressOrder[b.className] || 5;
                 const quarterA = parseQuarter(a.cells[7].textContent);
                 const quarterB = parseQuarter(b.cells[7].textContent);
 
-                if (progressA < progressB) return -1;
-                if (progressA > progressB) return 1;
-                if (completedA < completedB) return -1;
-                if (completedA > completedB) return 1;
-                if (quarterA.year < quarterB.year) return -1;
-                if (quarterA.year > quarterB.year) return 1;
-                if (quarterA.qtr < quarterB.qtr) return -1;
-                if (quarterA.qtr > quarterB.qtr) return 1;
-                return 0;
+                if (progressA !== progressB) return progressA - progressB;
+                if (quarterA.year !== quarterB.year) return quarterB.year - quarterA.year;
+                return quarterB.qtr - quarterA.qtr;
             });
 
             rows.forEach(row => table.appendChild(row));
