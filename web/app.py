@@ -55,7 +55,16 @@ def load_data():
         df = pd.read_csv(csv_filename)
         sort_order = {'Late': 0, 'Exposed': 1, 'On Track': 2, 'Completed': 3}
         df['SortOrder'] = df['Ratification Progress'].map(sort_order)
-        df = df.sort_values(by='SortOrder').drop(columns=['SortOrder'])
+
+        # Rename columns
+        df.rename(columns={
+            'Baseline Ratification Quarter': 'Planned Ratification Quarter',
+            'Target Ratification Quarter': 'Trending Ratification Quarter'
+        }, inplace=True)
+
+        # Sorting by 'SortOrder' first, then by 'Trending Ratification Quarter'
+        df = df.sort_values(by=['SortOrder', 'Trending Ratification Quarter'], ascending=[True, True])
+        df = df.drop(columns=['SortOrder'])
         return df
 
     except Exception as e:
@@ -65,10 +74,10 @@ def load_data():
 def parse_status(value):
     if 'Freeze' in value:
         return 'Freeze'
-    elif 'Ratification-Ready' in value:
+    elif 'Ratification-Ready' in value or 'Rat-Ready' in value:
         return 'Ratification-Ready'
-    elif 'Under Development' in value:
-        return 'Under Development'
+    elif 'Under Development' in value or 'Development' in value:
+        return 'Development'
     elif 'Planning' in value:
         return 'Planning'
     elif 'Inception' in value:

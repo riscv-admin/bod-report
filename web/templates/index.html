@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RISC-V Specification Dashboard for BoD</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-family: 'Open Sans', sans-serif;
             background-color: #f9f9f9;
             color: #333;
             overflow-x: hidden;
@@ -44,22 +45,24 @@
             overflow: hidden;
             table-layout: fixed;
             font-size: 13px;
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            border: 1px solid #ddd;
+            font-family: 'Open Sans', sans-serif;
+            border: 2px solid #333; /* Increased contrast for table border */
             position: relative;
         }
         th, td {
             padding: 8px;
             text-align: center;
-            border-bottom: 1px solid #ddd;
-            vertical-align: middle;
-            position: relative;
+            border: 1px solid #333; /* Increased contrast for cell borders */
+            vertical-align: middle; /* Center content vertically */
         }
         th {
             background-color: #f1f1f1;
             text-align: center;
-            vertical-align: middle;
             white-space: normal;
+            vertical-align: middle; /* Center content vertically */
+        }
+        tr:hover {
+            background-color: #e7d5c5; /* Light gray background on hover */
         }
         .resizer {
             display: inline-block;
@@ -83,12 +86,13 @@
         }
         h2 {
             margin-bottom: 10px;
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-family: 'Open Sans', sans-serif;
             text-align: center;
         }
         #header {
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 10px;
             width: 100%;
             max-width: 1200px;
@@ -158,6 +162,63 @@
             color: #666;
             margin-top: 5px;
             display: block;
+        }
+        .badge {
+            padding: 5px;
+            font-size: 12px;
+            border-radius: 4px;
+        }
+        .progress-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #666;
+        }
+        .progress-label {
+            width: 25%;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .bg-completed {
+            color: #28a745; /* Green color for completed phases */
+        }
+        .bg-current {
+            color: #007bff; /* Blue color for current phase */
+            font-weight: bold; /* Bold for current phase */
+            white-space: nowrap;  /* Prevent wrapping */
+        }
+        .bg-upcoming {
+            color: #adb5bd; /* Lighter gray color for upcoming phases */
+        }
+        .legend {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 10px;
+            font-size: 12px;
+            margin-top: 10px; /* Added space between Progress and the legend */
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-right: 15px;
+        }
+        .legend-color {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        .legend-completed {
+            background-color: #28a745; /* Green color for completed phases */
+        }
+        .legend-current {
+            background-color: #007bff; /* Blue color for current phase */
+        }
+        .legend-upcoming {
+            background-color: #adb5bd; /* Lighter gray color for upcoming phases */
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.9.0/dist/html-to-image.min.js"></script>
@@ -249,14 +310,16 @@
 
             rows.sort((a, b) => {
                 const progressOrder = { "late": 1, "exposed": 2, "on-track": 3, "completed": 4 };
-                const progressA = progressOrder[a.className] || 5;
-                const progressB = progressOrder[b.className] || 5;
+                const progressA = progressOrder[a.cells[8].textContent.trim().toLowerCase()] || 5;
+                const progressB = progressOrder[b.cells[8].textContent.trim().toLowerCase()] || 5;
+
+                if (progressA !== progressB) return progressA - progressB;
+
                 const quarterA = parseQuarter(a.cells[7].textContent);
                 const quarterB = parseQuarter(b.cells[7].textContent);
 
-                if (progressA !== progressB) return progressA - progressB;
-                if (quarterA.year !== quarterB.year) return quarterB.year - quarterA.year;
-                return quarterB.qtr - quarterA.qtr;
+                if (quarterA.year !== quarterB.year) return quarterA.year - quarterB.year;
+                return quarterA.qtr - quarterB.qtr;
             });
 
             rows.forEach(row => table.appendChild(row));
@@ -326,25 +389,28 @@
 <body>
     <div class="container">
         <h2>Specification Dashboard</h2>
+        <div id="header">
+            <div id="last-updated">
+                Last updated: {{ last_updated }}
+            </div>
+            <button id="save-button" class="btn btn-primary" onclick="saveAsImage()">Save as Image</button>
+        </div>
         <div class="timeline">
             <div class="timeline-point"><span>Q1</span></div>
             <div class="timeline-point"><span>Q2</span></div>
             <div class="timeline-point"><span>Q3</span></div>
             <div class="timeline-point"><span>Q4</span></div>
         </div>
-        <div id="header">
-            <button id="save-button" class="btn btn-primary" onclick="saveAsImage()">Save as Image</button>
-        </div>
         <div class="table-container">
             <table class="table table-bordered">
                 <thead>
                     <tr>
                         <th>Specification</th>
-                        <th>Planning<span class="phase-duration"></span></th>
-                        <th>Development<span class="phase-duration"></span></th>
-                        <th>Freeze<span class="phase-duration"></span></th>
-                        <th>Ratification-Ready<span class="phase-duration"></span></th>
                         <th class="narrow-column">ISA or NON-ISA?</th>
+                        <th>Planning</th>
+                        <th>Development</th>
+                        <th>Freeze</th>
+                        <th>Ratification-Ready</th>
                         <th class="narrow-column">Baseline Ratification Quarter</th>
                         <th class="narrow-column">Target Ratification Quarter</th>
                         <th class="narrow-column">Ratification Progress</th>
@@ -355,32 +421,32 @@
                     {% set current_phase, next_phase = row['Status']|calculate_progress %}
                     <tr class="{{ (row['Ratification Progress']|default('')).replace(' ', '-').lower() }}">
                         <td><a href="{{ row['Jira URL'] }}" target="_blank">{{ row['Summary'] }}</a></td>
-                        {% for phase in ['Planning', 'Development', 'Freeze', 'Ratification-Ready'] %}
-                            {% if phase == current_phase %}
-                                <td class="current-phase">In Progress</td>  <!-- In Progress text for current phase -->
-                            {% elif ['Planning', 'Development', 'Freeze', 'Ratification-Ready'].index(phase) < ['Planning', 'Development', 'Freeze', 'Ratification-Ready'].index(current_phase) %}
-                                <td class="checkmark">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="green" width="24px" height="24px"><path d="M0 0h24v24H0z" fill="none"/><path d="M9 16.2l-4.2-4.2-1.4 1.4 5.6 5.6 12-12-1.4-1.4z"/></svg>
-                                </td>  <!-- Green check mark for completed phases -->
-                            {% else %}
-                                <td class="upcoming-phase">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="lightgray" width="24px" height="24px"><circle cx="6" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="18" cy="12" r="2"/></svg>
-                                </td>  <!-- Light gray three dots for future phases -->
-                            {% endif %}
-                        {% endfor %}
                         <td class="narrow-column">{{ row['ISA or NON-ISA?'] }}</td>
-                        <td class="narrow-column">{{ row['Baseline Ratification Quarter'] }}</td>
-                        <td class="narrow-column">{{ row['Target Ratification Quarter'] }}</td>
+                        {% for phase in ['Planning', 'Development', 'Freeze', 'Ratification-Ready'] %}
+                            <td class="text-center">
+                                {% if phase == current_phase %}
+                                    <span class="bg-current" data-toggle="tooltip" title="Current Phase: {{ phase }}" style="white-space: nowrap;">In Progress</span>
+                                {% elif ['Planning', 'Development', 'Freeze', 'Ratification-Ready'].index(phase) < ['Planning', 'Development', 'Freeze', 'Ratification-Ready'].index(current_phase) %}
+                                    <span class="bg-completed" data-toggle="tooltip" title="Completed Phase: {{ phase }}">✔</span>
+                                {% else %}
+                                    <span class="bg-upcoming" data-toggle="tooltip" title="Upcoming Phase: {{ phase }}">...</span>
+                                {% endif %}
+                            </td>
+                        {% endfor %}
+                        <td class="narrow-column">{{ row['Planned Ratification Quarter'] }}</td>
+                        <td class="narrow-column">{{ row['Trending Ratification Quarter'] }}</td>
                         <td class="narrow-column">{{ row['Ratification Progress'] }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-        <div id="last-updated">
-            Last updated: {{ last_updated }}
-        </div>
         <div id="countdown"></div>
     </div>
+    <script>
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip()
+        })
+    </script>
 </body>
 </html>
