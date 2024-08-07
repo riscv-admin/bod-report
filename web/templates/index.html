@@ -126,7 +126,7 @@
             max-width: 1200px;
             display: flex;
             justify-content: space-between;
-            margin-bottom: 40px;
+            margin-bottom: 20px; /* Adjusted margin to fit search bar */
             position: relative;
         }
         .timeline::before {
@@ -219,6 +219,20 @@
         }
         .legend-upcoming {
             background-color: #adb5bd; /* Lighter gray color for upcoming phases */
+        }
+        #searchContainer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 40px 0 20px; /* Increased top margin to add more space above */
+        }
+        #searchInput {
+            width: 50%; /* Adjust width as needed */
+            padding: 10px;
+            border-radius: 50px; /* Rounded corners */
+            border: 1px solid #ccc;
+            font-size: 14px;
+            font-family: 'Open Sans', sans-serif;
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.9.0/dist/html-to-image.min.js"></script>
@@ -401,6 +415,9 @@
             <div class="timeline-point"><span>Q3</span></div>
             <div class="timeline-point"><span>Q4</span></div>
         </div>
+        <div id="searchContainer">
+            <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Search for specifications...">
+        </div>
         <div class="table-container">
             <table class="table table-bordered">
                 <thead>
@@ -411,7 +428,7 @@
                         <th>Development</th>
                         <th>Freeze</th>
                         <th>Ratification-Ready</th>
-                        <th class="narrow-column">Baseline Ratification Quarter</th>
+                        <th class="narrow-column">Planned Ratification Quarter</th>
                         <th class="narrow-column">Target Ratification Quarter</th>
                         <th class="narrow-column">Ratification Progress</th>
                     </tr>
@@ -444,6 +461,26 @@
         <div id="countdown"></div>
     </div>
     <script>
+        function filterTable() {
+            var input, filter, table, tr, td, i, txtValue;
+            input = document.getElementById("searchInput");
+            filter = input.value.toUpperCase();
+            table = document.querySelector("table tbody");
+            tr = table.getElementsByTagName("tr");
+
+            for (i = 0; i < tr.length; i++) {
+                td = tr[i].getElementsByTagName("td")[0];
+                if (td) {
+                    txtValue = td.textContent || td.innerText;
+                    if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                        tr[i].style.display = "";
+                    } else {
+                        tr[i].style.display = "none";
+                    }
+                }
+            }
+        }
+
         $(function () {
             $('[data-toggle="tooltip"]').tooltip()
         })
