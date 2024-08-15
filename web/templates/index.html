@@ -10,8 +10,109 @@
         body {
             font-family: 'Open Sans', sans-serif;
             background-color: #f9f9f9;
-            color: #333;
+            color: #222;
+            font-size: 15px;
             overflow-x: hidden;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        #header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        #save-button {
+            font-size: 12px;
+            padding: 6px 12px;
+        }
+        #last-updated {
+            font-size: 12px;
+            color: #888;
+        }
+        .table-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            overflow-x: auto;
+        }
+        table {
+            margin-top: 10px;
+            width: 100%;
+            max-width: 1200px;
+            background-color: white;
+            border-radius: 10px;
+            overflow: hidden;
+            table-layout: fixed;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            position: relative;
+        }
+        th, td {
+            padding: 10px 8px;
+            text-align: center;
+            border: 1px solid #ccc;
+            vertical-align: middle;
+            color: #222;
+        }
+        th {
+            background-color: #f1f1f1;
+            font-weight: 600;
+            white-space: normal;
+            vertical-align: middle;
+            min-height: 50px;
+        }
+        td {
+            white-space: nowrap;
+            position: relative;
+        }
+        .specification-column {
+            width: 300px;
+            text-align: center; /* Centered header text */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            position: relative;
+        }
+        .specification-column .tooltip-text {
+            visibility: hidden;
+            opacity: 0;
+            background-color: #333;
+            color: #fff;
+            text-align: left;
+            border-radius: 5px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%; /* Position the tooltip above the text */
+            left: 50%;
+            transform: translateX(-50%);
+            transition: opacity 0.3s;
+            font-size: 13px;
+            max-width: 300px;
+            line-height: 1.4em;
+        }
+        .specification-column:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        .specification-column .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #333 transparent transparent transparent;
         }
         .on-track {
             background-color: #d4edda;
@@ -29,105 +130,18 @@
             background-color: #d1ecf1;
             color: #0c5460;
         }
-        .table-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-            overflow-x: auto;
-        }
-        table {
-            margin-top: 10px;
-            width: 100%;
-            max-width: 1200px;
-            background-color: white;
-            border-radius: 10px;
-            overflow: hidden;
-            table-layout: fixed;
-            font-size: 13px;
-            font-family: 'Open Sans', sans-serif;
-            border: 2px solid #333; /* Increased contrast for table border */
-            position: relative;
-        }
-        th, td {
-            padding: 8px;
-            text-align: center;
-            border: 1px solid #333; /* Increased contrast for cell borders */
-            vertical-align: middle; /* Center content vertically */
-        }
-        th {
-            background-color: #f1f1f1;
-            text-align: center;
-            white-space: normal;
-            vertical-align: middle; /* Center content vertically */
-        }
-        tr:hover {
-            background-color: #e7d5c5; /* Light gray background on hover */
-        }
-        .resizer {
-            display: inline-block;
-            width: 5px;
-            height: 100%;
-            position: absolute;
-            right: 0;
-            top: 0;
-            cursor: col-resize;
-            user-select: none;
-        }
-        .narrow-column {
-            width: 120px;
-        }
-        a {
-            color: #007bff;
-            text-decoration: none;
-        }
-        a:hover {
-            text-decoration: underline;
-        }
-        h2 {
-            margin-bottom: 10px;
-            font-family: 'Open Sans', sans-serif;
-            text-align: center;
-        }
-        #header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-            width: 100%;
-            max-width: 1200px;
-            align-self: center;
-        }
-        #save-button {
-            font-size: 12px;  /* Smaller button size */
-        }
-        #last-updated,
-        #countdown {
-            font-size: 12px;
-            color: #888;  /* Slightly darker color */
-            text-align: center;
-            margin-top: 5px;
-        }
-        .checkmark {
-            color: green;
-            font-size: 1.5em;
-        }
-        .current-phase {
-            color: #1E90FF;  /* Less bright blue */
-            font-size: 0.85em;  /* Smaller text size */
-            white-space: nowrap;  /* Prevent wrapping */
-        }
-        .upcoming-phase {
-            color: lightgray;
-            font-size: 1.5em;
+        .in-progress {
+            color: #007bff; /* Blue text color */
+            font-weight: bold; /* Optional: Make the text bold */
         }
         .timeline {
             width: 100%;
             max-width: 1200px;
             display: flex;
             justify-content: space-between;
-            margin-bottom: 20px; /* Adjusted margin to fit search bar */
+            margin-bottom: 20px;
             position: relative;
+            margin-top: 20px;
         }
         .timeline::before {
             content: '';
@@ -157,69 +171,6 @@
             font-size: 12px;
             white-space: nowrap;
         }
-        .phase-duration {
-            font-size: 10px;
-            color: #666;
-            margin-top: 5px;
-            display: block;
-        }
-        .badge {
-            padding: 5px;
-            font-size: 12px;
-            border-radius: 4px;
-        }
-        .progress-labels {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-            color: #666;
-        }
-        .progress-label {
-            width: 25%;
-            text-align: center;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .bg-completed {
-            color: #28a745; /* Green color for completed phases */
-        }
-        .bg-current {
-            color: #007bff; /* Blue color for current phase */
-            font-weight: bold; /* Bold for current phase */
-            white-space: nowrap;  /* Prevent wrapping */
-        }
-        .bg-upcoming {
-            color: #adb5bd; /* Lighter gray color for upcoming phases */
-        }
-        .legend {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 10px;
-            font-size: 12px;
-            margin-top: 10px; /* Added space between Progress and the legend */
-        }
-        .legend-item {
-            display: flex;
-            align-items: center;
-            margin-right: 15px;
-        }
-        .legend-color {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            margin-right: 5px;
-        }
-        .legend-completed {
-            background-color: #28a745; /* Green color for completed phases */
-        }
-        .legend-current {
-            background-color: #007bff; /* Blue color for current phase */
-        }
-        .legend-upcoming {
-            background-color: #adb5bd; /* Lighter gray color for upcoming phases */
-        }
         #searchContainer {
             display: flex;
             justify-content: center;
@@ -227,7 +178,7 @@
             margin: 40px 0 20px; /* Increased top margin to add more space above */
         }
         #searchInput {
-            width: 50%; /* Adjust width as needed */
+            width: 50%;
             padding: 10px;
             border-radius: 50px; /* Rounded corners */
             border: 1px solid #ccc;
@@ -353,7 +304,6 @@
             var countdownTimer = setInterval(function() {
                 var minutes = Math.floor(timeLeft / 60);
                 var seconds = timeLeft % 60;
-                //countdownElement.textContent = 'Page reloads in ' + minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
 
                 timeLeft--;
 
@@ -402,32 +352,38 @@
 </head>
 <body>
     <div class="container">
-        <h2>Specification Dashboard</h2>
+        <h2>RISC-V Specification Dashboard for BoD</h2>
         <div id="header">
             <div id="last-updated">
                 Last updated: {{ last_updated }}
             </div>
             <button id="save-button" class="btn btn-primary" onclick="saveAsImage()">Save as Image</button>
         </div>
+
+        <!-- Timeline for quarters -->
         <div class="timeline">
             <div class="timeline-point"><span>Q1</span></div>
             <div class="timeline-point"><span>Q2</span></div>
             <div class="timeline-point"><span>Q3</span></div>
             <div class="timeline-point"><span>Q4</span></div>
         </div>
+
+        <!-- Search bar -->
         <div id="searchContainer">
             <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Search for specifications...">
         </div>
+
+        <!-- Table displaying specifications -->
         <div class="table-container">
             <table class="table table-bordered">
                 <thead>
                     <tr>
-                        <th>Specification</th>
+                        <th class="specification-column">Specification</th>
                         <th class="narrow-column">ISA or NON-ISA?</th>
-                        <th>Planning</th>
-                        <th>Development</th>
-                        <th>Freeze</th>
-                        <th>Ratification-Ready</th>
+                        <th class="narrow-column">Planning</th>
+                        <th class="narrow-column">Development</th>
+                        <th class="narrow-column">Freeze</th>
+                        <th class="narrow-column">Ratification-Ready</th>
                         <th class="narrow-column">Planned Ratification Quarter</th>
                         <th class="narrow-column">Target Ratification Quarter</th>
                         <th class="narrow-column">Ratification Progress</th>
@@ -437,12 +393,17 @@
                     {% for index, row in data.iterrows() %}
                     {% set current_phase, next_phase = row['Status']|calculate_progress %}
                     <tr class="{{ (row['Ratification Progress']|default('')).replace(' ', '-').lower() }}">
-                        <td><a href="{{ row['Jira URL'] }}" target="_blank">{{ row['Summary'] }}</a></td>
+                        <td class="specification-column">
+                            <a href="{{ row['Jira URL'] }}" target="_blank">{{ row['Summary'] }}</a>
+                            <div class="tooltip-text">
+                                {{ row['Summary'] }}<br><a href="{{ row['Jira URL'] }}" target="_blank">View in Jira</a>
+                            </div>
+                        </td>
                         <td class="narrow-column">{{ row['ISA or NON-ISA?'] }}</td>
                         {% for phase in ['Planning', 'Development', 'Freeze', 'Ratification-Ready'] %}
                             <td class="text-center">
                                 {% if phase == current_phase %}
-                                    <span class="bg-current" data-toggle="tooltip" title="Current Phase: {{ phase }}" style="white-space: nowrap;">In Progress</span>
+                                    <span class="in-progress" data-toggle="tooltip" title="Current Phase: {{ phase }}" style="white-space: nowrap;">In Progress</span>
                                 {% elif ['Planning', 'Development', 'Freeze', 'Ratification-Ready'].index(phase) < ['Planning', 'Development', 'Freeze', 'Ratification-Ready'].index(current_phase) %}
                                     <span class="bg-completed" data-toggle="tooltip" title="Completed Phase: {{ phase }}">✔</span>
                                 {% else %}
