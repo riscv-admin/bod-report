@@ -15,7 +15,7 @@
             overflow-x: hidden;
         }
         .container {
-            max-width: 1200px;
+            max-width: 1000px; /* Reduced width */
             margin: 0 auto;
         }
         h2 {
@@ -47,40 +47,44 @@
         table {
             margin-top: 10px;
             width: 100%;
-            max-width: 1200px;
+            max-width: 1000px; /* Reduced width */
             background-color: white;
             border-radius: 10px;
             overflow: hidden;
             table-layout: fixed;
-            font-size: 14px;
+            font-size: 9pt; /* Reduced font size */
             border: 1px solid #ccc;
             position: relative;
         }
         th, td {
-            padding: 10px 8px;
+            padding: 0px 1px; /* Adjusted padding to match smaller font size */
             text-align: center;
             border: 1px solid #ccc;
             vertical-align: middle;
             color: #222;
+            font-size: 9.5pt;
+            line-height: 1;
         }
         th {
             background-color: #f1f1f1;
             font-weight: 600;
             white-space: normal;
             vertical-align: middle;
-            min-height: 50px;
+            min-height: 10px;
         }
         td {
             white-space: nowrap;
             position: relative;
+            height: auto;
         }
         .specification-column {
-            width: 300px;
+            width: 250px; /* Adjusted width */
             text-align: center; /* Centered header text */
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             position: relative;
+            font-weight: bold; /* Make text bold */
         }
         .specification-column .tooltip-text {
             visibility: hidden;
@@ -96,7 +100,7 @@
             left: 50%;
             transform: translateX(-50%);
             transition: opacity 0.3s;
-            font-size: 13px;
+            font-size: 10px;
             max-width: 300px;
             line-height: 1.4em;
         }
@@ -136,7 +140,7 @@
         }
         .timeline {
             width: 100%;
-            max-width: 1200px;
+            max-width: 1000px; /* Reduced width */
             display: flex;
             justify-content: space-between;
             margin-bottom: 20px;
@@ -381,7 +385,7 @@
                         <th class="specification-column">Specification</th>
                         <th class="narrow-column">ISA or NON-ISA?</th>
                         <th class="narrow-column">Planning</th>
-                        <th class="narrow-column">Development</th>
+                        <th class="narrow-column">Dev</th>
                         <th class="narrow-column">Freeze</th>
                         <th class="narrow-column">Ratification-Ready</th>
                         <th class="narrow-column">Planned Ratification Quarter</th>
