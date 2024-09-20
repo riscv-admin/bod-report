@@ -9,22 +9,66 @@ Author: Rafael Sene, rafael@riscv.org - Initial implementation
 import csv
 import os
 from datetime import datetime
-from jira import JIRA
+from atlassian import Jira
 
-def get_data_from_jira(jira_token):
+
+# Function to parse and extract issue details
+def parse_issues(issues):
+    parsed_issues = []
+    for issue in issues:
+        issue_id = issue.get('id')
+        issue_key = issue.get('key')
+        fields = issue.get('fields', {})
+
+        # Extracting various fields from the issue
+        url="https://lf-riscv.atlassian.net/browse/" + issue_key
+        summary = fields.get('summary')
+        status = fields.get('status', {}).get('name')
+        isa_or_non_isa = fields.get('customfield_10042', {}).get('value')
+        baseline_ratification_quarter = fields.get('customfield_10039', {}).get('value')
+        target_ratification_quarter = fields.get('customfield_10040', {}).get('value')
+        ratification_progress = fields.get('customfield_10038', {}).get('value')
+
+        # Collect issue information
+        parsed_issues.append({
+            'URL': url,
+            'ID': issue_id,
+            'Key': issue_key,
+            'Summary': summary,
+            'Status': status,
+            'ISA or NON-ISA': isa_or_non_isa,
+            'Baseline Ratification Quarter': baseline_ratification_quarter,
+            'Target Ratification Quarter': target_ratification_quarter,
+            'Ratification Progress': ratification_progress,
+        })
+    return parsed_issues
+
+
+def get_data_from_jira(jira_token, jira_email):
     """
-    Fetch data from JIRA with the given JIRA_TOKEN and JQL (JIRA Query Language).
+    Fetch data from JIRA with the given JIRA_TOKEN and JQL (JIRA Query Language)
+    and write the data to a CSV file.
 
     Parameters:
     jira_token (str): The JIRA token used for authentication.
     """
     print("Fetching data from JIRA...")
-    jira = JIRA("https://jira.riscv.org", token_auth=jira_token)
+    jira = Jira(
+        url="https://lf-riscv.atlassian.net",
+        username=jira_email,
+        password=jira_token,
+        cloud=True
+    )
 
     # JQL query to fetch required issues
     jql = ('project = RVS AND '
            'issuetype not in subTaskIssueTypes() AND '
            '"BoD Report" = Yes ORDER BY priority DESC, updated DESC')
+
+    # Extract issues from the JSON data
+    all_issues = jira.jql(jql)
+    issues = all_issues.get('issues', [])
+    parsed_issues = parse_issues(issues)
 
     # Generating the CSV filename with current date and time
     print("Generating csv file...")
@@ -33,6 +77,7 @@ def get_data_from_jira(jira_token):
     # Open (or create) a CSV file and write data to it
     with open(csv_filename, 'w', newline='') as file:
         writer = csv.writer(file, quotechar="'", quoting=csv.QUOTE_MINIMAL)
+        # Writing the header row
         writer.writerow([
             'Jira URL',
             'Summary',
@@ -43,32 +88,20 @@ def get_data_from_jira(jira_token):
             'Ratification Progress'
         ])
 
-        start = 0
-        while True:
-            # Fetch issues from JIRA
-            issues = jira.search_issues(jql, startAt=start, expand='changelog')
+        # Writing each issue to the CSV file
+        for issue in parsed_issues:
+            writer.writerow([
+                issue['URL'],
+                issue['Summary'],
+                issue['Status'],
+                issue['ISA or NON-ISA'],
+                issue['Baseline Ratification Quarter'],
+                issue['Target Ratification Quarter'],
+                issue['Ratification Progress']
+            ])
 
-            if len(issues) == 0:
-                break
+    print(f"Data successfully written to {csv_filename}")
 
-            for issue in issues:
-                # Skip issues without subtasks
-                if not issue.fields.subtasks:
-                    continue
-
-                # Write issue data to CSV
-                if issue.fields.customfield_10713:
-                    writer.writerow([
-                        f"https://jira.riscv.org/browse/{issue.key}",
-                        issue.fields.summary,
-                        issue.fields.status.name,
-                        issue.fields.customfield_10440,
-                        issue.fields.customfield_10715,
-                        issue.fields.customfield_10713,
-                        issue.fields.customfield_10714
-                    ])
-
-            start += len(issues)
 
 def get_csv_content(csv_filepath):
     """
@@ -84,6 +117,7 @@ def get_csv_content(csv_filepath):
         csv_reader = csv.reader(csv_file, quotechar="'")
         return list(csv_reader)
 
+
 def read_csv_file(file_path):
     """
     Function to read a CSV file and return its content as a list of rows.
@@ -98,12 +132,19 @@ def read_csv_file(file_path):
         csv_reader = csv.reader(csv_file)
         return list(csv_reader)
 
+
 def main():
     """
     The main function to run the whole script.
     """
+    # Check for both JIRA_TOKEN and JIRA_EMAIL environment variables
+    if not os.getenv('JIRA_EMAIL'):
+        raise EnvironmentError("""
+            Error: Required environment variable is not set.
+            Please check that you have set the following environment variable:
+            - JIRA_EMAIL
+        """)
 
-    # Check if the required environment variables are set
     if not os.getenv('JIRA_TOKEN'):
         raise EnvironmentError("""
             Error: Required environment variable is not set.
@@ -112,7 +153,8 @@ def main():
         """)
 
     # Fetch data from JIRA and write to CSV
-    get_data_from_jira(os.getenv('JIRA_TOKEN'))
+    get_data_from_jira(os.getenv('JIRA_TOKEN'), os.getenv('JIRA_EMAIL'))
+
 
 if __name__ == '__main__':
     main()
