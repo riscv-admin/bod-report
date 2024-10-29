@@ -90,15 +90,16 @@ def get_data_from_jira(jira_token, jira_email):
 
         # Writing each issue to the CSV file
         for issue in parsed_issues:
-            writer.writerow([
-                issue['URL'],
-                issue['Summary'],
-                issue['Status'],
-                issue['ISA or NON-ISA'],
-                issue['Baseline Ratification Quarter'],
-                issue['Target Ratification Quarter'],
-                issue['Ratification Progress']
-            ])
+            if issue['Status'] != "Specification Ratified" and issue['Status'] != "Specification Not Ratified":
+                writer.writerow([
+                    issue['URL'],
+                    issue['Summary'],
+                    issue['Status'],
+                    issue['ISA or NON-ISA'],
+                    issue['Baseline Ratification Quarter'],
+                    issue['Target Ratification Quarter'],
+                    issue['Ratification Progress']
+                ])
 
     print(f"Data successfully written to {csv_filename}")
 
