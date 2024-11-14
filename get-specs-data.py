@@ -21,13 +21,21 @@ def parse_issues(issues):
         fields = issue.get('fields', {})
 
         # Extracting various fields from the issue
-        url="https://lf-riscv.atlassian.net/browse/" + issue_key
+        url = "https://lf-riscv.atlassian.net/browse/" + issue_key
         summary = fields.get('summary')
         status = fields.get('status', {}).get('name')
         isa_or_non_isa = fields.get('customfield_10042', {}).get('value')
-        baseline_ratification_quarter = fields.get('customfield_10039', {}).get('value')
-        target_ratification_quarter = fields.get('customfield_10040', {}).get('value')
-        ratification_progress = fields.get('customfield_10038', {}).get('value')
+
+        # Safely accessing custom fields with a fallback to "Not Planned Yet" if None
+        baseline_ratification_quarter = (
+            fields.get('customfield_10039', {}).get('value') if fields.get('customfield_10039') else "Not Set Yet"
+        )
+        target_ratification_quarter = (
+            fields.get('customfield_10040', {}).get('value') if fields.get('customfield_10040') else "Not Set Yet"
+        )
+        ratification_progress = (
+            fields.get('customfield_10038', {}).get('value') if fields.get('customfield_10038') else "Not Set Yet"
+        )
 
         # Collect issue information
         parsed_issues.append({
@@ -42,7 +50,6 @@ def parse_issues(issues):
             'Ratification Progress': ratification_progress,
         })
     return parsed_issues
-
 
 def get_data_from_jira(jira_token, jira_email):
     """
