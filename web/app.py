@@ -48,7 +48,7 @@ def download_csv_from_github():
 
 def load_data():
     try:
-        csv_filename = download_csv_from_github()
+        csv_filename = "../specs_20241114_115008.csv" #download_csv_from_github()
         if not csv_filename:
             raise Exception("CSV download failed, cannot load data.")
 
@@ -105,4 +105,4 @@ def index():
     return render_template('index.html', data=data, last_updated=last_updated)
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
+    app.run(debug=True, host='0.0.0.0',port=5001)

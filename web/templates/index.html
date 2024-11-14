@@ -129,6 +129,10 @@
             background-color: #f8d7da;
             color: #721c24;
         }
+        .not-set-yet {
+            background-color: #d1cfcf;
+            color: #d1cfcf;
+        }
         .completed {
             background-color: #d1ecf1;
             color: #0c5460;
@@ -277,7 +281,7 @@
             const rows = Array.from(table.rows);
 
             rows.sort((a, b) => {
-                const progressOrder = { "late": 1, "exposed": 2, "on-track": 3, "completed": 4 };
+                const progressOrder = { "late": 1, "exposed": 2, "on-track": 3, "completed": 4, "not-set-yet": 5 };
                 const progressA = progressOrder[a.cells[8].textContent.trim().toLowerCase()] || 5;
                 const progressB = progressOrder[b.cells[8].textContent.trim().toLowerCase()] || 5;
 
