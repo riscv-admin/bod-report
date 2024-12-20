@@ -1,49 +1,61 @@
 import os
-from github import Github
 import requests
+from github import Github
 
 # Ensure the GitHub token is set as an environment variable
-GITHUB_TOKEN = os.getenv('GITHUB_TOKEN')
-if not GITHUB_TOKEN:
-    raise EnvironmentError("GITHUB_TOKEN is not set. Please set it as an environment variable.")
+def get_github_token():
+    token = os.getenv('GITHUB_TOKEN')
+    if not token:
+        raise EnvironmentError("GITHUB_TOKEN is not set. Please set it as an environment variable.")
+    return token
 
 # Authenticate to GitHub
-g = Github(GITHUB_TOKEN)
+def authenticate_to_github(token):
+    return Github(token)
 
-# Repository details
-repo_name = "riscv-admin/bod-report"
-repo = g.get_repo(repo_name)
+# Fetch the latest release of the specified repository
+def get_latest_release(repo):
+    return repo.get_latest_release()
 
-# Get the latest release
-latest_release = repo.get_latest_release()
+# Filter assets to get CSV files matching a specific pattern
+def get_csv_assets(release):
+    return [
+        asset for asset in release.get_assets()
+        if asset.name.startswith('specs_') and asset.name.endswith('.csv')
+    ]
 
-# Print the fetched release information for debugging
-print("Latest release information:")
-print(latest_release)
-
-# Extract the URLs of the assets and filter for the CSV file pattern
-csv_assets = [asset for asset in latest_release.get_assets() if asset.name.startswith('specs_') and asset.name.endswith('.csv')]
-
-# Check if there are any CSV assets
-if not csv_assets:
-    raise Exception("No CSV assets found in the latest release.")
-
-# Download each CSV asset using the asset URL for authenticated download
-for asset in csv_assets:
-    asset_url = asset.url
-    print(f"Downloading {asset.name} from {asset_url}")
-
-    # Use requests to get the asset data
+# Download a file from a given asset URL
+def download_asset(asset, token):
+    print(f"Downloading {asset.name} from {asset.url}")
     headers = {
-        "Authorization": f"token {GITHUB_TOKEN}",
+        "Authorization": f"token {token}",
         "Accept": "application/octet-stream"
     }
-    file_response = requests.get(asset_url, headers=headers)
-    if file_response.status_code != 200:
-        raise Exception(f"Failed to download asset: {file_response.status_code}, {file_response.text}")
-
-    # Save the file
+    response = requests.get(asset.url, headers=headers)
+    response.raise_for_status()  # Raise an HTTPError if the request failed
     with open(asset.name, 'wb') as file:
-        file.write(file_response.content)
+        file.write(response.content)
+    print(f"Downloaded {asset.name}")
 
-print("Download complete.")
+# Main function to orchestrate the workflow
+def main():
+    token = get_github_token()
+    github_client = authenticate_to_github(token)
+
+    repo_name = "riscv-admin/bod-report"
+    repo = github_client.get_repo(repo_name)
+
+    latest_release = get_latest_release(repo)
+    print("Latest release information:", latest_release)
+
+    csv_assets = get_csv_assets(latest_release)
+    if not csv_assets:
+        raise Exception("No CSV assets found in the latest release.")
+
+    for asset in csv_assets:
+        download_asset(asset, token)
+
+    print("All downloads completed successfully.")
+
+if __name__ == "__main__":
+    main()

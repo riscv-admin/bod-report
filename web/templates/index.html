@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="static/favicon.ico">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
     <style>
@@ -14,7 +15,7 @@
             overflow-x: hidden;
         }
         .container {
-            max-width: 1000px; /* Reduced width */
+            max-width: 1300px; /* Reduced width */
             margin: 0 auto;
         }
         h2 {
@@ -46,7 +47,7 @@
         table {
             margin-top: 10px;
             width: 100%;
-            max-width: 1000px; /* Reduced width */
+            max-width: 1300px; /* Reduced width */
             background-color: white;
             border-radius: 10px;
             overflow: hidden;
@@ -143,7 +144,7 @@
         }
         .timeline {
             width: 100%;
-            max-width: 1000px; /* Reduced width */
+            max-width: 1300px; /* Reduced width */
             display: flex;
             justify-content: space-between;
             margin-bottom: 20px;
@@ -393,7 +394,9 @@
                         <th class="narrow-column">Ratification-Ready</th>
                         <th class="narrow-column">Planned Ratification Quarter</th>
                         <th class="narrow-column">Target Ratification Quarter</th>
-                        <th class="narrow-column">Ratification Progress</th>
+                        <th class="narrow-column">Current Ratification Status</th>
+                        <th class="narrow-column">Previous Ratification Status</th>
+                        <th class="narrow-column">GitHub</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -411,7 +414,7 @@
                             <td class="text-center">
                                 {% if phase == current_phase %}
                                     <span class="in-progress" data-toggle="tooltip" title="Current Phase: {{ phase }}" style="white-space: nowrap;">In Progress</span>
-                                {% elif ['Planning', 'Development', 'Freeze', 'Ratification-Ready'].index(phase) < ['Planning', 'Development', 'Freeze', 'Ratification-Ready'].index(current_phase) %}
+                                {% elif ['Inception', 'Planning', 'Development', 'Freeze', 'Ratification-Ready'].index(phase) < ['Inception','Planning', 'Development', 'Freeze', 'Ratification-Ready'].index(current_phase) %}
                                     <span class="bg-completed" data-toggle="tooltip" title="Completed Phase: {{ phase }}">✔</span>
                                 {% else %}
                                     <span class="bg-upcoming" data-toggle="tooltip" title="Upcoming Phase: {{ phase }}">...</span>
@@ -421,6 +424,16 @@
                         <td class="narrow-column">{{ row['Planned Ratification Quarter'] }}</td>
                         <td class="narrow-column">{{ row['Trending Ratification Quarter'] }}</td>
                         <td class="narrow-column">{{ row['Ratification Progress'] }}</td>
+                        <td class="narrow-column">{{ row['Previous Ratification Progress'] }}</td>
+                        <td>
+                            {% if row['GitHub'] %}
+                            <a href="{{ row['GitHub'] }}" target="_blank">
+                                <img src="static/github-mark.svg" alt="GitHub Logo" width="20" height="20" style="vertical-align: middle;">
+                            </a>
+                            {% else %}
+                            N/A
+                            {% endif %}
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>

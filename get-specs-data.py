@@ -34,7 +34,15 @@ def parse_issues(issues):
             fields.get('customfield_10040', {}).get('value') if fields.get('customfield_10040') else "Not Set Yet"
         )
         ratification_progress = (
-            fields.get('customfield_10038', {}).get('value') if fields.get('customfield_10038') else "Not Set Yet"
+            "Not Set Yet" if fields.get('customfield_10038') is None or fields.get('customfield_10038', {}).get('value') in [None, "Not Set"]
+            else fields.get('customfield_10038', {}).get('value')
+        )
+        previous_ratification_progress = (
+            "Not Set Yet" if fields.get('customfield_10136') is None or fields.get('customfield_10136', {}).get('value') in [None, "Not Set"]
+            else fields.get('customfield_10136', {}).get('value')
+        )
+        github = (
+            fields.get('customfield_10043', {}) if fields.get('customfield_10043') else "Not Set Yet"
         )
 
         # Collect issue information
@@ -44,10 +52,12 @@ def parse_issues(issues):
             'Key': issue_key,
             'Summary': summary,
             'Status': status,
+            'GitHub': github,
             'ISA or NON-ISA': isa_or_non_isa,
             'Baseline Ratification Quarter': baseline_ratification_quarter,
             'Target Ratification Quarter': target_ratification_quarter,
             'Ratification Progress': ratification_progress,
+            'Previous Ratification Progress': previous_ratification_progress
         })
     return parsed_issues
 
@@ -90,9 +100,11 @@ def get_data_from_jira(jira_token, jira_email):
             'Summary',
             'Status',
             'ISA or NON-ISA?',
+            'GitHub',
             'Baseline Ratification Quarter',
             'Target Ratification Quarter',
-            'Ratification Progress'
+            'Ratification Progress',
+            'Previous Ratification Progress'
         ])
 
         # Writing each issue to the CSV file
@@ -103,9 +115,11 @@ def get_data_from_jira(jira_token, jira_email):
                     issue['Summary'],
                     issue['Status'],
                     issue['ISA or NON-ISA'],
+                    issue['GitHub'],
                     issue['Baseline Ratification Quarter'],
                     issue['Target Ratification Quarter'],
-                    issue['Ratification Progress']
+                    issue['Ratification Progress'],
+                    issue['Previous Ratification Progress']
                 ])
 
     print(f"Data successfully written to {csv_filename}")
