@@ -126,15 +126,15 @@
         border-color: #333 transparent transparent transparent;
       }
       .on-track {
-        background-color: #d4edda;
+        background-color: #c3f0c8 !important;
         color: #155724;
       }
       .exposed {
-        background-color: #fff3cd;
+        background-color: #fff8e1 !important;
         color: #856404;
       }
       .late {
-        background-color: #f8d7da;
+        background-color: #ffebee !important;
         color: #721c24;
       }
       .not-set-yet {
@@ -410,12 +410,13 @@
         const isaOrNonIsa = cells[1].innerText.trim() || "N/A";
         const planning = cells[2].innerText.trim() || "N/A";
         const development = cells[3].innerText.trim() || "N/A";
-        const freeze = cells[4].innerText.trim() || "N/A";
-        const ratificationReady = cells[5].innerText.trim() || "N/A";
-        const plannedQuarter = cells[6].innerText.trim() || "N/A";
-        const targetQuarter = cells[7].innerText.trim() || "N/A";
-        const currentStatus = cells[8].innerText.trim() || "N/A";
-        const previousStatus = cells[9].innerText.trim() || "N/A";
+        const stabilization = cells[4].innerText.trim() || "N/A";
+        const freeze = cells[5].innerText.trim() || "N/A";
+        const ratificationReady = cells[6].innerText.trim() || "N/A";
+        const plannedQuarter = cells[7].innerText.trim() || "N/A";
+        const targetQuarter = cells[8].innerText.trim() || "N/A";
+        const currentStatus = cells[9].innerText.trim() || "N/A";
+        const previousStatus = cells[10].innerText.trim() || "N/A";
 
         // Extract GitHub link
         const githubLinkElement = cells[10].querySelector("a");
@@ -431,6 +432,7 @@ Specification Details:
 - ISA or NON-ISA?: ${isaOrNonIsa}
 - Planning: ${planning}
 - Development: ${development}
+- Stabilization: ${stabilization}
 - Freeze: ${freeze}
 - Ratification-Ready: ${ratificationReady}
 - Planned Ratification Quarter: ${plannedQuarter}
@@ -450,6 +452,47 @@ This email was generated using the RISC-V Specification Dashboard. For more info
         )}&body=${encodeURIComponent(body)}`;
         window.location.href = mailtoLink;
       }
+
+      document.addEventListener("DOMContentLoaded", function () {
+    const statusCells = document.querySelectorAll("td:nth-child(11), td:nth-child(12)");
+
+    statusCells.forEach(cell => {
+        const statusText = cell.textContent.trim().toLowerCase();
+
+        switch (statusText) {
+            case "on track":
+                cell.style.backgroundColor = "#c3f0c8";  // Light green
+                cell.style.color = "#155724";
+                cell.style.fontWeight = "bold";
+                break;
+            case "exposed":
+                cell.style.backgroundColor = "#fff3cd";  // Light yellow
+                cell.style.color = "#856404";
+                cell.style.fontWeight = "bold";
+                break;
+            case "late":
+                cell.style.backgroundColor = "#f8d7da";  // Light red
+                cell.style.color = "#721c24";
+                cell.style.fontWeight = "bold";
+                break;
+            case "completed":
+                cell.style.backgroundColor = "#d1ecf1";  // Light blue
+                cell.style.color = "#0c5460";
+                cell.style.fontWeight = "bold";
+                break;
+            case "not set":
+                cell.style.backgroundColor = "#e0e0e0";  // Light gray
+                cell.style.color = "#333";
+                cell.style.fontWeight = "bold";
+                break;
+            default:
+                cell.style.backgroundColor = "#ffffff";  // Default white
+                cell.style.color = "#222";
+                cell.style.fontWeight = "bold";
+        }
+    });
+});
+
 
       document.addEventListener("DOMContentLoaded", addResizers);
     </script>
@@ -498,12 +541,14 @@ This email was generated using the RISC-V Specification Dashboard. For more info
               <th class="narrow-column">ISA or NON-ISA?</th>
               <th class="narrow-column">Planning</th>
               <th class="narrow-column">Dev</th>
+              <th class="narrow-column">Stabilization</th>
               <th class="narrow-column">Freeze</th>
               <th class="narrow-column">Ratification-Ready</th>
+              <th class="narrow-column">Publication</th>
               <th class="narrow-column">Planned Ratification Quarter</th>
               <th class="narrow-column">Target Ratification Quarter</th>
-              <th class="narrow-column">Current Ratification Status</th>
-              <th class="narrow-column">Previous Ratification Status</th>
+              <th class="narrow-column">Current Status</th>
+              <th class="narrow-column">Previous Status</th>
               <th class="github-column">GitHub</th>
               <th class="share-column">Share</th>
             </tr>
@@ -527,8 +572,8 @@ This email was generated using the RISC-V Specification Dashboard. For more info
                 </div>
               </td>
               <td class="narrow-column">{{ row['ISA or NON-ISA?'] }}</td>
-              {% for phase in ['Planning', 'Development', 'Freeze',
-              'Ratification-Ready'] %}
+              {% for phase in ['Planning', 'Development','Stabilization','Freeze',
+              'Ratification-Ready','Specification in Publication'] %}
               <td class="text-center">
                 {% if phase == current_phase %}
                 <span
@@ -538,10 +583,10 @@ This email was generated using the RISC-V Specification Dashboard. For more info
                   style="white-space: nowrap"
                   >In Progress</span
                 >
-                {% elif ['Inception', 'Planning', 'Development', 'Freeze',
-                'Ratification-Ready'].index(phase) < ['Inception','Planning',
-                'Development', 'Freeze',
-                'Ratification-Ready'].index(current_phase) %}
+                {% elif ['Inception', 'Planning', 'Development','Stabilization','Freeze',
+                'Ratification-Ready','Specification in Publication'].index(phase) < ['Inception','Planning',
+                'Development','Stabilization','Freeze',
+                'Ratification-Ready','Specification in Publication'].index(current_phase) %}
                 <span
                   class="bg-completed"
                   data-toggle="tooltip"
