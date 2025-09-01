@@ -21,7 +21,7 @@ def parse_issues(issues):
         fields = issue.get('fields', {})
 
         # Extracting various fields from the issue
-        url = "https://lf-riscv.atlassian.net/browse/" + issue_key
+        url = "https://riscv.atlassian.net/browse/" + issue_key
         summary = fields.get('summary')
         status = fields.get('status', {}).get('name')
         isa_or_non_isa = fields.get('customfield_10042', {}).get('value')
@@ -71,7 +71,7 @@ def get_data_from_jira(jira_token, jira_email):
     """
     print("Fetching data from JIRA...")
     jira = Jira(
-        url="https://lf-riscv.atlassian.net",
+        url="https://riscv.atlassian.net",
         username=jira_email,
         password=jira_token,
         cloud=True
