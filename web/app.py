@@ -84,10 +84,12 @@ def parse_status(value):
         return 'Inception'
     elif 'Stabilization' in value:
         return 'Stabilization'
+    elif 'Cancelled' in value:
+        return 'Cancelled'
     return value
 
 def calculate_progress(status):
-    phases = ['Inception', 'Planning', 'Development', 'Stabilization', 'Freeze', 'Ratification-Ready', 'Ratified']
+    phases = ['Inception', 'Planning', 'Development', 'Stabilization', 'Freeze', 'Ratification-Ready', 'Ratified' ,'Cancelled']
     current_phase = next((phase for phase in phases if phase in status), None)
     if current_phase:
         current_index = phases.index(current_phase)
