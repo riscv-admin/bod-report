@@ -1,44 +1,67 @@
 import os
-from github import Github
+from datetime import datetime
+from typing import Optional
+
+import pandas as pd
 import requests
 from flask import Flask, render_template
-import pandas as pd
-from datetime import datetime
 
-# Ensure the GitHub token is set as an environment variable
-GITHUB_TOKEN = os.getenv('GITHUB_TOKEN')
+# PyGithub (modern auth)
+from github import Github, Auth
+
+# --- Config / Env ----------------------------------------------------------------
+
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 if not GITHUB_TOKEN:
     raise EnvironmentError("GITHUB_TOKEN is not set. Please set it as an environment variable.")
 
-# Initialize Flask application
+REPO_NAME = "riscv-admin/bod-report"
+ASSET_PREFIX = "specs_"
+ASSET_SUFFIX = ".csv"
+
+# --- Flask -----------------------------------------------------------------------
+
 app = Flask(__name__)
 
-def remove_existing_csv_files():
-    for file in os.listdir('.'):
-        if file.endswith('.csv'):
-            os.remove(file)
+# --- Helpers ---------------------------------------------------------------------
 
-def download_csv_from_github():
+def remove_existing_csv_files() -> None:
+    """Purge any prior CSVs to avoid stale reads."""
+    for file in os.listdir("."):
+        if file.endswith(".csv"):
+            try:
+                os.remove(file)
+            except Exception as e:
+                print(f"Warning: failed to remove {file}: {e}")
+
+def download_csv_from_github() -> Optional[str]:
+    """Download the latest release CSV asset matching prefix/suffix."""
     try:
-        g = Github(GITHUB_TOKEN)
-        repo_name = "riscv-admin/bod-report"
-        repo = g.get_repo(repo_name)
+        gh = Github(auth=Auth.Token(GITHUB_TOKEN))
+        repo = gh.get_repo(REPO_NAME)
         latest_release = repo.get_latest_release()
 
-        csv_assets = [asset for asset in latest_release.get_assets() if asset.name.startswith('specs_') and asset.name.endswith('.csv')]
+        csv_assets = [
+            asset for asset in latest_release.get_assets()
+            if asset.name.startswith(ASSET_PREFIX) and asset.name.endswith(ASSET_SUFFIX)
+        ]
         if not csv_assets:
-            raise Exception("No CSV assets found in the latest release.")
+            raise RuntimeError("No CSV assets found in the latest release.")
 
+        asset = csv_assets[0]
         remove_existing_csv_files()
-        asset_url = csv_assets[0].url
-        headers = {"Authorization": f"token {GITHUB_TOKEN}", "Accept": "application/octet-stream"}
-        response = requests.get(asset_url, headers=headers)
-        if response.status_code != 200:
-            raise Exception(f"Failed to download asset: {response.status_code}, {response.text}")
 
-        csv_filename = csv_assets[0].name
-        with open(csv_filename, 'wb') as file:
-            file.write(response.content)
+        headers = {
+            "Authorization": f"token {GITHUB_TOKEN}",
+            "Accept": "application/octet-stream",
+        }
+        resp = requests.get(asset.url, headers=headers, timeout=60)
+        if resp.status_code != 200:
+            raise RuntimeError(f"Failed to download asset: {resp.status_code}, {resp.text}")
+
+        csv_filename = asset.name
+        with open(csv_filename, "wb") as f:
+            f.write(resp.content)
 
         return csv_filename
 
@@ -46,67 +69,109 @@ def download_csv_from_github():
         print(f"Error downloading CSV from GitHub: {e}")
         return None
 
-def load_data():
+def load_data() -> Optional[pd.DataFrame]:
+    """Load, normalize, sort."""
     try:
         csv_filename = download_csv_from_github()
         if not csv_filename:
-            raise Exception("CSV download failed, cannot load data.")
+            raise RuntimeError("CSV download failed, cannot load data.")
 
         df = pd.read_csv(csv_filename)
-        sort_order = {'Late': 0, 'Exposed': 1, 'On Track': 2, 'Completed': 3}
-        df['SortOrder'] = df['Ratification Progress'].map(sort_order)
 
-        # Rename columns
-        df.rename(columns={
-            'Baseline Ratification Quarter': 'Planned Ratification Quarter',
-            'Target Ratification Quarter': 'Trending Ratification Quarter'
-        }, inplace=True)
+        df.rename(
+            columns={
+                "Baseline Ratification Quarter": "Planned Ratification Quarter",
+                "Target Ratification Quarter": "Trending Ratification Quarter",
+            },
+            inplace=True,
+        )
 
-        # Sorting by 'SortOrder' first, then by 'Trending Ratification Quarter'
-        df = df.sort_values(by=['SortOrder', 'Trending Ratification Quarter'], ascending=[True, True])
-        df = df.drop(columns=['SortOrder'])
+        # Normalize status strings
+        if "Status" in df.columns:
+            df["Status"] = df["Status"].fillna("").astype(str)
+
+        # Sort by ratification progress + trending quarter
+        sort_order = {"Late": 0, "Exposed": 1, "On Track": 2, "Completed": 3}
+        df["SortOrder"] = df.get("Ratification Progress", "").map(sort_order)
+        df.sort_values(by=["SortOrder", "Trending Ratification Quarter"], ascending=[True, True], inplace=True)
+        df.drop(columns=["SortOrder"], errors="ignore", inplace=True)
+
         return df
 
     except Exception as e:
         print(f"Error loading data: {e}")
         return None
 
-def parse_status(value):
-    if 'Freeze' in value:
-        return 'Freeze'
-    elif 'Ratification-Ready' in value or 'Rat-Ready' in value:
-        return 'Ratification-Ready'
-    elif 'Under Development' in value or 'Development' in value:
-        return 'Development'
-    elif 'Planning' in value:
-        return 'Planning'
-    elif 'Inception' in value:
-        return 'Inception'
-    elif 'Stabilization' in value:
-        return 'Stabilization'
-    elif 'Cancelled' in value:
-        return 'Cancelled'
-    return value
+# --- Jinja Filters ---------------------------------------------------------------
 
-def calculate_progress(status):
-    phases = ['Inception', 'Planning', 'Development', 'Stabilization', 'Freeze', 'Ratification-Ready', 'Ratified' ,'Cancelled']
-    current_phase = next((phase for phase in phases if phase in status), None)
-    if current_phase:
-        current_index = phases.index(current_phase)
-        next_phase = phases[current_index + 1] if current_index + 1 < len(phases) else 'Ratified'
-        return current_phase, next_phase
-    return status, 'N/A'
+WORKFLOW_PHASES = [
+    "Inception",
+    "Planning",
+    "Development",
+    "Stabilization",
+    "Freeze",
+    "Ratification-Ready",
+    "Specification in Publication",
+]
 
-app.jinja_env.filters['parse_status'] = parse_status
-app.jinja_env.filters['calculate_progress'] = calculate_progress
+def parse_status(value: str) -> str:
+    if not value:
+        return value
 
-@app.route('/')
+    v = str(value)
+
+    if "Ratification-Ready" in v or "Rat-Ready" in v:
+        return "Ratification-Ready"
+    if "Specification in Publication" in v or "Publication" in v:
+        return "Specification in Publication"
+    if "Freeze" in v:
+        return "Freeze"
+    if "Stabilization" in v:
+        return "Stabilization"
+    if "Under Development" in v or "Development" in v:
+        return "Development"
+    if "Planning" in v:
+        return "Planning"
+    if "Inception" in v:
+        return "Inception"
+    if "Cancelled" in v:
+        return "Cancelled"
+
+    return v
+
+def calculate_progress(status: str):
+    if not status:
+        return None, None
+
+    normalized = parse_status(status)
+
+    if normalized not in WORKFLOW_PHASES:
+        return normalized, None
+
+    idx = WORKFLOW_PHASES.index(normalized)
+    next_phase = WORKFLOW_PHASES[idx + 1] if idx + 1 < len(WORKFLOW_PHASES) else "Ratified"
+    return normalized, next_phase
+
+app.jinja_env.filters["parse_status"] = parse_status
+app.jinja_env.filters["calculate_progress"] = calculate_progress
+
+# --- Routes ----------------------------------------------------------------------
+
+@app.route("/")
 def index():
     data = load_data()
     if data is None:
         return "Failed to load data.", 500
-    last_updated = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    return render_template('index.html', data=data, last_updated=last_updated)
 
-if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0',port=5001)
+    # FILTER CANCELLED SPECS
+    if "Status" in data.columns:
+        mask = ~data["Status"].fillna("").str.contains(r"\bcancelled\b", case=False, regex=True)
+        data = data[mask].copy()
+
+    last_updated = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return render_template("index.html", data=data, last_updated=last_updated)
+
+# --- Main ------------------------------------------------------------------------
+
+if __name__ == "__main__":
+    app.run(debug=True, host="0.0.0.0", port=5001)
