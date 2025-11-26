@@ -19,11 +19,25 @@ REPO_NAME = "riscv-admin/bod-report"
 ASSET_PREFIX = "specs_"
 ASSET_SUFFIX = ".csv"
 
+# Expected CSV schema (for sanity checks / future use if needed)
+EXPECTED_COLUMNS = [
+    "Jira URL",
+    "Summary",
+    "Status",
+    "ISA or NON-ISA?",
+    "GitHub",
+    "Baseline Ratification Quarter",
+    "Target Ratification Quarter",
+    "Ratification Progress",
+    "Previous Ratification Progress",
+]
+
 # --- Flask -----------------------------------------------------------------------
 
 app = Flask(__name__)
 
 # --- Helpers ---------------------------------------------------------------------
+
 
 def remove_existing_csv_files() -> None:
     """Purge any prior CSVs to avoid stale reads."""
@@ -33,6 +47,7 @@ def remove_existing_csv_files() -> None:
                 os.remove(file)
             except Exception as e:
                 print(f"Warning: failed to remove {file}: {e}")
+
 
 def download_csv_from_github() -> Optional[str]:
     """Download the latest release CSV asset matching prefix/suffix."""
@@ -69,6 +84,42 @@ def download_csv_from_github() -> Optional[str]:
         print(f"Error downloading CSV from GitHub: {e}")
         return None
 
+
+def safe_read_csv(csv_filename: str) -> pd.DataFrame:
+    """
+    User-proof CSV loader:
+    - first try strict/fast parsing,
+    - on failure, retry with more tolerant settings,
+    - finally, try single-quote as quotechar (for hand-edited rows).
+    """
+    try:
+        # First attempt: normal, fast path
+        return pd.read_csv(csv_filename)
+    except pd.errors.ParserError as e:
+        print(f"[WARN] Strict CSV parse failed: {e}")
+        print("[INFO] Retrying with engine='python', on_bad_lines='warn'")
+
+        try:
+            df = pd.read_csv(
+                csv_filename,
+                engine="python",
+                on_bad_lines="warn",  # or "skip" if you prefer to drop bad rows
+            )
+            return df
+        except pd.errors.ParserError as e2:
+            print(f"[WARN] Python engine parse failed: {e2}")
+            print("[INFO] Retrying with quotechar=\"'\" (single-quote fields)")
+
+            # Last resort for cases like 'Packed Single Instruction, Multiple Data - SIMD (P)'
+            df = pd.read_csv(
+                csv_filename,
+                engine="python",
+                on_bad_lines="warn",
+                quotechar="'",
+            )
+            return df
+
+
 def load_data() -> Optional[pd.DataFrame]:
     """Load, normalize, sort."""
     try:
@@ -76,7 +127,12 @@ def load_data() -> Optional[pd.DataFrame]:
         if not csv_filename:
             raise RuntimeError("CSV download failed, cannot load data.")
 
-        df = pd.read_csv(csv_filename)
+        df = safe_read_csv(csv_filename)
+
+        # Optional sanity log
+        missing = [c for c in EXPECTED_COLUMNS if c not in df.columns]
+        if missing:
+            print(f"[WARN] Missing expected columns in CSV: {missing}")
 
         df.rename(
             columns={
@@ -93,7 +149,11 @@ def load_data() -> Optional[pd.DataFrame]:
         # Sort by ratification progress + trending quarter
         sort_order = {"Late": 0, "Exposed": 1, "On Track": 2, "Completed": 3}
         df["SortOrder"] = df.get("Ratification Progress", "").map(sort_order)
-        df.sort_values(by=["SortOrder", "Trending Ratification Quarter"], ascending=[True, True], inplace=True)
+        df.sort_values(
+            by=["SortOrder", "Trending Ratification Quarter"],
+            ascending=[True, True],
+            inplace=True,
+        )
         df.drop(columns=["SortOrder"], errors="ignore", inplace=True)
 
         return df
@@ -113,6 +173,7 @@ WORKFLOW_PHASES = [
     "Ratification-Ready",
     "Specification in Publication",
 ]
+
 
 def parse_status(value: str) -> str:
     if not value:
@@ -139,6 +200,7 @@ def parse_status(value: str) -> str:
 
     return v
 
+
 def calculate_progress(status: str):
     if not status:
         return None, None
@@ -152,10 +214,12 @@ def calculate_progress(status: str):
     next_phase = WORKFLOW_PHASES[idx + 1] if idx + 1 < len(WORKFLOW_PHASES) else "Ratified"
     return normalized, next_phase
 
+
 app.jinja_env.filters["parse_status"] = parse_status
 app.jinja_env.filters["calculate_progress"] = calculate_progress
 
 # --- Routes ----------------------------------------------------------------------
+
 
 @app.route("/")
 def index():
@@ -172,6 +236,7 @@ def index():
     return render_template("index.html", data=data, last_updated=last_updated)
 
 # --- Main ------------------------------------------------------------------------
+
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5001)

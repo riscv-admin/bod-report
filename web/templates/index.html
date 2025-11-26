@@ -1,430 +1,535 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/x-icon" href="static/favicon.ico" />
-    <link
-      rel="stylesheet"
-      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
-    />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap"
-      rel="stylesheet"
-    />
-    <style>
-      body {
-        font-family: "Open Sans", sans-serif;
-        background-color: #ffffff;
-        color: #222;
-        font-size: 15px;
-        overflow-x: hidden;
-      }
-      .container {
-        max-width: 1400px; /* Reduced width */
-        margin: 0 auto;
-      }
-      h2 {
-        text-align: center;
-        margin-bottom: 20px;
-        font-size: 24px;
-      }
-      #header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 10px;
-      }
-      #save-button {
-        font-size: 12px;
-        padding: 6px 12px;
-      }
-      #last-updated {
-        font-size: 12px;
-        color: #888;
-      }
-      .table-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 100%;
-        overflow-x: auto;
-      }
-      table {
-        margin-top: 10px;
-        width: 100%;
-        max-width: 1400px; /* Reduced width */
-        background-color: white;
-        border-radius: 10px;
-        overflow: hidden;
-        table-layout: fixed;
-        font-size: 9pt; /* Reduced font size */
-        border: 1px solid #ccc;
-        position: relative;
-      }
-      th,
-      td {
-        padding: 0px 1px; /* Adjusted padding to match smaller font size */
-        text-align: center;
-        border: 1px solid #ccc;
-        vertical-align: middle;
-        color: #222;
-        font-size: 9.5pt;
-        line-height: 1;
-      }
-      th {
-        background-color: #f1f1f1;
-        font-weight: 600;
-        white-space: normal;
-        vertical-align: middle;
-        min-height: 10px;
-      }
-      td {
-        white-space: nowrap;
-        position: relative;
-        height: auto;
-      }
-      .specification-column {
-        width: 250px; /* Adjusted width */
-        text-align: center; /* Centered header text */
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        position: relative;
-        font-weight: bold; /* Make text bold */
-      }
-      .specification-column .tooltip-text {
-        visibility: hidden;
-        opacity: 0;
-        background-color: #333;
-        color: #fff;
-        text-align: left;
-        border-radius: 5px;
-        padding: 5px;
-        position: absolute;
-        z-index: 1;
-        bottom: 125%; /* Position the tooltip above the text */
-        left: 50%;
-        transform: translateX(-50%);
-        transition: opacity 0.3s;
-        font-size: 10px;
-        max-width: 300px;
-        line-height: 1.4em;
-      }
-      .specification-column:hover .tooltip-text {
-        visibility: visible;
-        opacity: 1;
-      }
-      .specification-column .tooltip-text::after {
-        content: "";
-        position: absolute;
-        top: 100%;
-        left: 50%;
-        margin-left: -5px;
-        border-width: 5px;
-        border-style: solid;
-        border-color: #333 transparent transparent transparent;
-      }
-      .on-track {
-        background-color: #c3f0c8 !important;
-        color: #155724;
-      }
-      .exposed {
-        background-color: #fff8e1 !important;
-        color: #856404;
-      }
-      .late {
-        background-color: #ffebee !important;
-        color: #721c24;
-      }
-      .not-set-yet {
-        background-color: #d1cfcf;
-        color: #d1cfcf;
-      }
-      .completed {
-        background-color: #d1ecf1;
-        color: #0c5460;
-      }
-      .in-progress {
-        color: #007bff; /* Blue text color */
-        font-weight: bold; /* Optional: Make the text bold */
-      }
-      .timeline {
-        width: 100%;
-        max-width: 1400px; /* Reduced width */
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 20px;
-        position: relative;
-        margin-top: 20px;
-      }
-      .timeline::before {
-        content: "";
-        position: absolute;
-        top: 50%;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: #ddd;
-      }
-      .timeline-point {
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        background: #ddd;
-        position: relative;
-        z-index: 1;
-      }
-      .timeline-point.current {
-        background: #007bff;
-      }
-      .timeline-point span {
-        position: absolute;
-        top: 25px;
-        left: 50%;
-        transform: translateX(-50%);
-        font-size: 12px;
-        white-space: nowrap;
-      }
-      #searchContainer {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin: 40px 0 20px; /* Increased top margin to add more space above */
-      }
-      #searchInput {
-        width: 50%;
-        padding: 10px;
-        border-radius: 50px; /* Rounded corners */
-        border: 1px solid #ccc;
-        font-size: 14px;
-        font-family: "Open Sans", sans-serif;
-      }
-      /* Adjust column widths */
-      .github-column,
-      .share-column {
-        width: 60px; /* Fixed width for narrow columns */
-        text-align: center; /* Horizontally center content */
-        vertical-align: middle; /* Vertically center content */
-      }
 
-      th.github-column,
-      th.share-column {
-        text-align: center; /* Horizontally center header text */
-        vertical-align: middle; /* Vertically center header text */
-        white-space: nowrap; /* Prevent text wrapping */
-      }
-    </style>
-    <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.9.0/dist/html-to-image.min.js"></script>
-    <script>
-      function saveAsImage() {
-        var node = document.querySelector(".table-container");
-        var now = new Date();
-        var formattedDate =
-          now.getFullYear() +
-          "-" +
-          ("0" + (now.getMonth() + 1)).slice(-2) +
-          "-" +
-          ("0" + now.getDate()).slice(-2) +
-          "_" +
-          ("0" + now.getHours()).slice(-2) +
-          "-" +
-          ("0" + now.getMinutes()).slice(-2) +
-          "-" +
-          ("0" + now.getSeconds()).slice(-2);
-        var fileName =
-          "RISC-V_Specification_Dashboard_" + formattedDate + ".png";
-        htmlToImage
-          .toPng(node, {
-            quality: 1,
-            pixelRatio: 2, // Increase pixel ratio for higher quality
-          })
-          .then(function (dataUrl) {
-            var link = document.createElement("a");
-            link.href = dataUrl;
-            link.download = fileName;
-            link.click();
-          })
-          .catch(function (error) {
-            console.error("Error generating image:", error);
-          });
-      }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/x-icon" href="static/favicon.ico" />
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: "Inter", sans-serif;
+      background-color: #ffffff;
+      color: #222;
+      font-size: 15px;
+      overflow-x: hidden;
+    }
 
-      function getCurrentQuarter() {
-        const month = new Date().getMonth() + 1;
-        return Math.ceil(month / 3);
-      }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
 
-      function getDaysLeftInQuarter() {
-        const now = new Date();
-        const currentQuarter = getCurrentQuarter();
-        let endOfQuarter;
-        switch (currentQuarter) {
-          case 1:
-            endOfQuarter = new Date(now.getFullYear(), 2, 31); // March 31
-            break;
-          case 2:
-            endOfQuarter = new Date(now.getFullYear(), 5, 30); // June 30
-            break;
-          case 3:
-            endOfQuarter = new Date(now.getFullYear(), 8, 30); // September 30
-            break;
-          case 4:
-            endOfQuarter = new Date(now.getFullYear(), 11, 31); // December 31
-            break;
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
+
+    #header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    #save-button {
+      font-size: 12px;
+      padding: 6px 12px;
+    }
+
+    #last-updated {
+      font-size: 12px;
+      color: #888;
+    }
+
+    .table-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    /* TABLE LAYOUT — allow column widths to expand */
+    table {
+      margin-top: 10px;
+      width: 100%;
+      max-width: 1400px;
+      background-color: white;
+      border-radius: 10px;
+      overflow: hidden;
+      table-layout: auto;
+      /* IMPORTANT: enables the wider Specification column */
+      font-size: 9pt;
+      border: 1px solid #ccc;
+      position: relative;
+    }
+
+    th,
+    td {
+      padding: 0px 1px;
+      text-align: center;
+      border: 1px solid #ccc;
+      vertical-align: middle;
+      color: #222;
+      font-size: 9.5pt;
+      line-height: 1;
+    }
+
+    th {
+      background-color: #f1f1f1;
+      font-weight: 600;
+      white-space: normal;
+      vertical-align: middle;
+      min-height: 10px;
+    }
+
+    /* -------------------------------------------------------------- */
+    /* SPECIFICATION COLUMN — 2× width + wrapping in cells            */
+    /* -------------------------------------------------------------- */
+
+    th.specification-column,
+    td.specification-column {
+      width: 500px !important;
+      /* DOUBLE SIZE */
+    }
+
+    /* Header stays single-line */
+    th.specification-column {
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    /* Body cells wrap cleanly */
+    td.specification-column {
+      text-align: left;
+      white-space: normal;
+      /* ENABLE wrapping */
+      overflow: visible;
+      text-overflow: clip;
+      word-wrap: break-word;
+      /* break long tokens */
+      font-weight: bold;
+      position: relative;
+    }
+
+    /* Tooltip for spec names */
+    .specification-column .tooltip-text {
+      visibility: hidden;
+      opacity: 0;
+      background-color: #333;
+      color: #fff;
+      text-align: left;
+      border-radius: 5px;
+      padding: 5px;
+      position: absolute;
+      z-index: 1;
+      bottom: 125%;
+      left: 50%;
+      transform: translateX(-50%);
+      transition: opacity 0.3s;
+      font-size: 10px;
+      max-width: 300px;
+      line-height: 1.4em;
+    }
+
+    .specification-column:hover .tooltip-text {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    .specification-column .tooltip-text::after {
+      content: "";
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      margin-left: -5px;
+      border-width: 5px;
+      border-style: solid;
+      border-color: #333 transparent transparent transparent;
+    }
+
+    /* -------------------------------------------------------------- */
+    /* Status Coloring                                                */
+    /* -------------------------------------------------------------- */
+
+    .on-track {
+      background-color: #c3f0c8 !important;
+      color: #155724;
+    }
+
+    .exposed {
+      background-color: #fff8e1 !important;
+      color: #856404;
+    }
+
+    .late {
+      background-color: #ffebee !important;
+      color: #721c24;
+    }
+
+    .not-set-yet {
+      background-color: #d1cfcf;
+      color: #d1cfcf;
+    }
+
+    .completed {
+      background-color: #d1ecf1;
+      color: #0c5460;
+    }
+
+    .in-progress {
+      color: #007bff;
+      font-weight: bold;
+    }
+
+    /* -------------------------------------------------------------- */
+    /* TIMELINE + YEAR PROGRESS BAR                                  */
+    /* -------------------------------------------------------------- */
+
+    .timeline {
+      width: 100%;
+      max-width: 1400px;
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      position: relative;
+      margin-top: 20px;
+    }
+
+    .timeline::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: transparent;
+    }
+
+    /* Remaining time (green stripes) */
+    .timeline-fill {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      transform: translateY(-50%);
+      border-radius: 2px;
+      overflow: hidden;
+      background: repeating-linear-gradient(to right,
+          #7fd48b 0,
+          #7fd48b 4px,
+          transparent 4px,
+          transparent 6px);
+    }
+
+    /* Past time (gray stripes) — width set via JS */
+    .timeline-fill-past {
+      height: 100%;
+      width: 0;
+      background: repeating-linear-gradient(to right,
+          #e0e0e0 0,
+          #e0e0e0 4px,
+          transparent 4px,
+          transparent 6px);
+    }
+
+    .timeline-point {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #ddd;
+      position: relative;
+      z-index: 1;
+    }
+
+    .timeline-point.current {
+      background: #007bff;
+    }
+
+    .timeline-point span {
+      position: absolute;
+      top: 25px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    /* -------------------------------------------------------------- */
+    /* Search Bar                                                     */
+    /* -------------------------------------------------------------- */
+
+    #searchContainer {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 40px 0 20px;
+    }
+
+    #searchInput {
+      width: 50%;
+      padding: 10px;
+      border-radius: 50px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+      font-family: "Open Sans", sans-serif;
+    }
+
+    /* -------------------------------------------------------------- */
+    /* Column Width Adjustments                                       */
+    /* -------------------------------------------------------------- */
+
+    .github-column,
+    .share-column {
+      width: 60px;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    th.github-column,
+    th.share-column {
+      text-align: center;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.9.0/dist/html-to-image.min.js"></script>
+  <script>
+    function saveAsImage() {
+      const node = document.querySelector(".table-container");
+      const now = new Date();
+
+      const formattedDate =
+        now.getFullYear() +
+        "-" +
+        ("0" + (now.getMonth() + 1)).slice(-2) +
+        "-" +
+        ("0" + now.getDate()).slice(-2) +
+        "_" +
+        ("0" + now.getHours()).slice(-2) +
+        "-" +
+        ("0" + now.getMinutes()).slice(-2) +
+        "-" +
+        ("0" + now.getSeconds()).slice(-2);
+
+      const fileName = "RISC-V_Specification_Dashboard_" + formattedDate + ".png";
+
+      htmlToImage
+        .toPng(node, {
+          quality: 1,
+          pixelRatio: 4,           // ⬅️ higher resolution (2x what you had)
+          backgroundColor: "#fff", // ⬅️ avoid transparent/grey artifacts
+        })
+        .then(function (dataUrl) {
+          const link = document.createElement("a");
+          link.href = dataUrl;
+          link.download = fileName;
+          link.click();
+        })
+        .catch(function (error) {
+          console.error("Error generating image:", error);
+        });
+    }
+
+    function getCurrentQuarter() {
+      const month = new Date().getMonth() + 1;
+      return Math.ceil(month / 3);
+    }
+
+    function getDaysLeftInQuarter() {
+      const now = new Date();
+      const currentQuarter = getCurrentQuarter();
+      let endOfQuarter;
+      switch (currentQuarter) {
+        case 1:
+          endOfQuarter = new Date(now.getFullYear(), 2, 31); // March 31
+          break;
+        case 2:
+          endOfQuarter = new Date(now.getFullYear(), 5, 30); // June 30
+          break;
+        case 3:
+          endOfQuarter = new Date(now.getFullYear(), 8, 30); // September 30
+          break;
+        case 4:
+          endOfQuarter = new Date(now.getFullYear(), 11, 31); // December 31
+          break;
+      }
+      const timeDiff = endOfQuarter - now;
+      return Math.ceil(timeDiff / (1000 * 60 * 60 * 24)); // Convert milliseconds to days
+    }
+
+    function highlightCurrentQuarter() {
+      const currentQuarter = getCurrentQuarter();
+      const daysLeft = getDaysLeftInQuarter();
+      const timelinePoints = document.querySelectorAll(".timeline-point");
+      timelinePoints.forEach((point, index) => {
+        if (index + 1 === currentQuarter) {
+          point.classList.add("current");
+          const span = point.querySelector("span");
+          span.textContent += ` (${daysLeft} days left)`;
         }
-        const timeDiff = endOfQuarter - now;
-        return Math.ceil(timeDiff / (1000 * 60 * 60 * 24)); // Convert milliseconds to days
-      }
+      });
+    }
 
-      function highlightCurrentQuarter() {
-        const currentQuarter = getCurrentQuarter();
-        const daysLeft = getDaysLeftInQuarter();
-        const timelinePoints = document.querySelectorAll(".timeline-point");
-        timelinePoints.forEach((point, index) => {
-          if (index + 1 === currentQuarter) {
-            point.classList.add("current");
-            const span = point.querySelector("span");
-            span.textContent += ` (${daysLeft} days left)`;
-          }
-        });
-      }
-
-      function countCompletedPhases(row) {
-        let count = 0;
-        for (let i = 1; i <= 4; i++) {
-          if (row.cells[i].classList.contains("checkmark")) {
-            count++;
-          }
+    function countCompletedPhases(row) {
+      let count = 0;
+      for (let i = 1; i <= 4; i++) {
+        if (row.cells[i].classList.contains("checkmark")) {
+          count++;
         }
-        return count;
       }
+      return count;
+    }
 
-      function parseQuarter(quarter) {
-        const year = parseInt(quarter.slice(0, 2));
-        const qtr = parseInt(quarter.slice(2));
-        return { year, qtr };
-      }
+    function parseQuarter(quarter) {
+      const year = parseInt(quarter.slice(0, 2));
+      const qtr = parseInt(quarter.slice(2));
+      return { year, qtr };
+    }
 
-      function sortTable() {
-        const table = document.querySelector("table tbody");
-        const rows = Array.from(table.rows);
+    function sortTable() {
+      const table = document.querySelector("table tbody");
+      const rows = Array.from(table.rows);
 
-        rows.sort((a, b) => {
-          const progressOrder = {
-            late: 1,
-            exposed: 2,
-            "on-track": 3,
-            completed: 4,
-            "not-set-yet": 5,
-          };
-          const progressA =
-            progressOrder[a.cells[8].textContent.trim().toLowerCase()] || 5;
-          const progressB =
-            progressOrder[b.cells[8].textContent.trim().toLowerCase()] || 5;
+      rows.sort((a, b) => {
+        const progressOrder = {
+          late: 1,
+          exposed: 2,
+          "on-track": 3,
+          completed: 4,
+          "not-set-yet": 5,
+        };
+        const progressA =
+          progressOrder[a.cells[8].textContent.trim().toLowerCase()] || 5;
+        const progressB =
+          progressOrder[b.cells[8].textContent.trim().toLowerCase()] || 5;
 
-          if (progressA !== progressB) return progressA - progressB;
+        if (progressA !== progressB) return progressA - progressB;
 
-          const quarterA = parseQuarter(a.cells[7].textContent);
-          const quarterB = parseQuarter(b.cells[7].textContent);
+        const quarterA = parseQuarter(a.cells[7].textContent);
+        const quarterB = parseQuarter(b.cells[7].textContent);
 
-          if (quarterA.year !== quarterB.year)
-            return quarterA.year - quarterB.year;
-          return quarterA.qtr - quarterB.qtr;
-        });
+        if (quarterA.year !== quarterB.year)
+          return quarterA.year - quarterB.year;
+        return quarterA.qtr - quarterB.qtr;
+      });
 
-        rows.forEach((row) => table.appendChild(row));
-      }
+      rows.forEach((row) => table.appendChild(row));
+    }
 
-      window.onload = function () {
-        startCountdown();
-        highlightCurrentQuarter();
-        sortTable();
-      };
+    /* YEAR FILL BAR LOGIC ---------------------------------------------------- */
+    function getYearProgressFraction() {
+      const now = new Date();
+      const startOfYear = new Date(now.getFullYear(), 0, 1); // Jan 1
+      const startOfNextYear = new Date(now.getFullYear() + 1, 0, 1); // next Jan 1
+      const elapsed = now - startOfYear;
+      const total = startOfNextYear - startOfYear;
+      return Math.min(Math.max(elapsed / total, 0), 1);
+    }
 
-      // Refresh the page every 1 hour
-      function startCountdown() {
-        var countdownElement = document.getElementById("countdown");
-        var timeLeft = 3600; // 1 hour in seconds
+    function updateYearFillBar() {
+      const pastEl = document.getElementById("timelineFillPast");
+      if (!pastEl) return;
 
-        var countdownTimer = setInterval(function () {
-          var minutes = Math.floor(timeLeft / 60);
-          var seconds = timeLeft % 60;
+      const progress = getYearProgressFraction() * 100;
+      pastEl.style.width = progress + "%"; // past = light gray; remainder shows green
+    }
 
-          timeLeft--;
+    window.onload = function () {
+      startCountdown();
+      highlightCurrentQuarter();
+      sortTable();
+      updateYearFillBar(); // NEW: update year progress bar
+    };
 
-          if (timeLeft < 0) {
-            clearInterval(countdownTimer);
-            location.reload();
-          }
-        }, 1000);
-      }
+    // Refresh the page every 1 hour
+    function startCountdown() {
+      var countdownElement = document.getElementById("countdown");
+      var timeLeft = 3600; // 1 hour in seconds
 
-      // Function to add resizers to table headers
-      function addResizers() {
-        const table = document.querySelector("table");
-        const cols = table.querySelectorAll("th");
-        cols.forEach((col) => {
-          const resizer = document.createElement("div");
-          resizer.className = "resizer";
-          col.appendChild(resizer);
-          resizer.addEventListener("mousedown", initResize);
-        });
-      }
+      var countdownTimer = setInterval(function () {
+        var minutes = Math.floor(timeLeft / 60);
+        var seconds = timeLeft % 60;
 
-      let startX, startWidth;
+        timeLeft--;
 
-      function initResize(e) {
-        startX = e.clientX;
-        startWidth = parseInt(
-          document.defaultView.getComputedStyle(e.target.parentElement).width,
-          10
-        );
-        document.documentElement.addEventListener("mousemove", doResize);
-        document.documentElement.addEventListener("mouseup", stopResize);
-      }
+        if (timeLeft < 0) {
+          clearInterval(countdownTimer);
+          location.reload();
+        }
+      }, 1000);
+    }
 
-      function doResize(e) {
-        e.target.parentElement.style.width =
-          startWidth + e.clientX - startX + "px";
-      }
+    // Function to add resizers to table headers
+    function addResizers() {
+      const table = document.querySelector("table");
+      const cols = table.querySelectorAll("th");
+      cols.forEach((col) => {
+        const resizer = document.createElement("div");
+        resizer.className = "resizer";
+        col.appendChild(resizer);
+        resizer.addEventListener("mousedown", initResize);
+      });
+    }
 
-      function stopResize(e) {
-        document.documentElement.removeEventListener("mousemove", doResize);
-        document.documentElement.removeEventListener("mouseup", stopResize);
-      }
+    let startX, startWidth;
 
-      function generateEmail(button) {
-        // Get the current row
-        const row = button.closest("tr");
-        const cells = row.querySelectorAll("td");
+    function initResize(e) {
+      startX = e.clientX;
+      startWidth = parseInt(
+        document.defaultView.getComputedStyle(e.target.parentElement).width,
+        10
+      );
+      document.documentElement.addEventListener("mousemove", doResize);
+      document.documentElement.addEventListener("mouseup", stopResize);
+    }
 
-        // Extract content from cells
-        const specificationCell = cells[0];
-        const specification = specificationCell.innerText.trim() || "N/A";
+    function doResize(e) {
+      e.target.parentElement.style.width =
+        startWidth + e.clientX - startX + "px";
+    }
 
-        // Extract Jira link from the Specification column
-        const jiraLinkElement = specificationCell.querySelector("a");
-        const jiraLink = jiraLinkElement ? jiraLinkElement.href : "N/A";
+    function stopResize(e) {
+      document.documentElement.removeEventListener("mousemove", doResize);
+      document.documentElement.removeEventListener("mouseup", stopResize);
+    }
 
-        const isaOrNonIsa = cells[1].innerText.trim() || "N/A";
-        const planning = cells[2].innerText.trim() || "N/A";
-        const development = cells[3].innerText.trim() || "N/A";
-        const stabilization = cells[4].innerText.trim() || "N/A";
-        const freeze = cells[5].innerText.trim() || "N/A";
-        const ratificationReady = cells[6].innerText.trim() || "N/A";
-        const plannedQuarter = cells[7].innerText.trim() || "N/A";
-        const targetQuarter = cells[8].innerText.trim() || "N/A";
-        const currentStatus = cells[9].innerText.trim() || "N/A";
-        const previousStatus = cells[10].innerText.trim() || "N/A";
+    function generateEmail(button) {
+      // Get the current row
+      const row = button.closest("tr");
+      const cells = row.querySelectorAll("td");
 
-        // Extract GitHub link
-        const githubLinkElement = cells[10].querySelector("a");
-        const githubLink = githubLinkElement ? githubLinkElement.href : "N/A";
+      // Extract content from cells
+      const specificationCell = cells[0];
+      const specification = specificationCell.innerText.trim() || "N/A";
 
-        // Construct the email content
-        const subject = `Specification Details: ${specification}`;
-        const body = `
+      // Extract Jira link from the Specification column
+      const jiraLinkElement = specificationCell.querySelector("a");
+      const jiraLink = jiraLinkElement ? jiraLinkElement.href : "N/A";
+
+      const isaOrNonIsa = cells[1].innerText.trim() || "N/A";
+      const planning = cells[2].innerText.trim() || "N/A";
+      const development = cells[3].innerText.trim() || "N/A";
+      const stabilization = cells[4].innerText.trim() || "N/A";
+      const freeze = cells[5].innerText.trim() || "N/A";
+      const ratificationReady = cells[6].innerText.trim() || "N/A";
+      const plannedQuarter = cells[7].innerText.trim() || "N/A";
+      const targetQuarter = cells[8].innerText.trim() || "N/A";
+      const currentStatus = cells[9].innerText.trim() || "N/A";
+      const previousStatus = cells[10].innerText.trim() || "N/A";
+
+      // RIGHT — GitHub icon is in column 13 (index 12)
+      const githubLinkElement = cells[12].querySelector("a");
+      const githubLink = githubLinkElement ? githubLinkElement.href : "N/A";
+
+
+      // Construct the email content
+      const subject = `Specification Details: ${specification}`;
+      const body = `
 Specification Details:
 
 - Specification: ${specification}
@@ -446,233 +551,192 @@ This email was generated using the RISC-V Specification Dashboard. For more info
 ---
 `.trim();
 
-        // Open the default email client with the email content
-        const mailtoLink = `mailto:?subject=${encodeURIComponent(
-          subject
-        )}&body=${encodeURIComponent(body)}`;
-        window.location.href = mailtoLink;
-      }
+      // Open the default email client with the email content
+      const mailtoLink = `mailto:?subject=${encodeURIComponent(
+        subject
+      )}&body=${encodeURIComponent(body)}`;
+      window.location.href = mailtoLink;
+    }
 
-      document.addEventListener("DOMContentLoaded", function () {
-    const statusCells = document.querySelectorAll("td:nth-child(11), td:nth-child(12)");
+    document.addEventListener("DOMContentLoaded", function () {
+      const statusCells = document.querySelectorAll(
+        "td:nth-child(11), td:nth-child(12)"
+      );
 
-    statusCells.forEach(cell => {
+      statusCells.forEach((cell) => {
         const statusText = cell.textContent.trim().toLowerCase();
 
         switch (statusText) {
-            case "on track":
-                cell.style.backgroundColor = "#c3f0c8";  // Light green
-                cell.style.color = "#155724";
-                cell.style.fontWeight = "bold";
-                break;
-            case "exposed":
-                cell.style.backgroundColor = "#fff3cd";  // Light yellow
-                cell.style.color = "#856404";
-                cell.style.fontWeight = "bold";
-                break;
-            case "late":
-                cell.style.backgroundColor = "#f8d7da";  // Light red
-                cell.style.color = "#721c24";
-                cell.style.fontWeight = "bold";
-                break;
-            case "completed":
-                cell.style.backgroundColor = "#d1ecf1";  // Light blue
-                cell.style.color = "#0c5460";
-                cell.style.fontWeight = "bold";
-                break;
-            case "not set":
-                cell.style.backgroundColor = "#e0e0e0";  // Light gray
-                cell.style.color = "#333";
-                cell.style.fontWeight = "bold";
-                break;
-            default:
-                cell.style.backgroundColor = "#ffffff";  // Default white
-                cell.style.color = "#222";
-                cell.style.fontWeight = "bold";
+          case "on track":
+            cell.style.backgroundColor = "#c3f0c8"; // Light green
+            cell.style.color = "#155724";
+            cell.style.fontWeight = "bold";
+            break;
+          case "exposed":
+            cell.style.backgroundColor = "#fff3cd"; // Light yellow
+            cell.style.color = "#856404";
+            cell.style.fontWeight = "bold";
+            break;
+          case "late":
+            cell.style.backgroundColor = "#f8d7da"; // Light red
+            cell.style.color = "#721c24";
+            cell.style.fontWeight = "bold";
+            break;
+          case "completed":
+            cell.style.backgroundColor = "#d1ecf1"; // Light blue
+            cell.style.color = "#0c5460";
+            cell.style.fontWeight = "bold";
+            break;
+          case "not set":
+            cell.style.backgroundColor = "#e0e0e0"; // Light gray
+            cell.style.color = "#333";
+            cell.style.fontWeight = "bold";
+            break;
+          default:
+            cell.style.backgroundColor = "#ffffff"; // Default white
+            cell.style.color = "#222";
+            cell.style.fontWeight = "bold";
         }
+      });
     });
-});
 
+    document.addEventListener("DOMContentLoaded", addResizers);
+  </script>
+  <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+</head>
 
-      document.addEventListener("DOMContentLoaded", addResizers);
-    </script>
-    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
-  </head>
-  <body>
-    <div class="container">
-      <h2></h2>
-      <div id="header">
-        <div id="last-updated">Last updated: {{ last_updated }}</div>
-        <button
-          id="save-button"
-          class="btn btn-primary"
-          onclick="saveAsImage()"
-        >
-          Save as Image
-        </button>
-      </div>
-
-      <!-- Timeline for quarters -->
-      <div class="timeline">
-        <div class="timeline-point"><span>Q1</span></div>
-        <div class="timeline-point"><span>Q2</span></div>
-        <div class="timeline-point"><span>Q3</span></div>
-        <div class="timeline-point"><span>Q4</span></div>
-      </div>
-
-      <!-- Search bar -->
-      <div id="searchContainer">
-        <input
-          type="text"
-          id="searchInput"
-          onkeyup="filterTable()"
-          placeholder="Search for specifications..."
-        />
-      </div>
-
-      <!-- Table displaying specifications -->
-      <div class="table-container">
-        <table class="table table-bordered">
-          <thead>
-            <tr>
-              <th class="specification-column">Specification</th>
-              <th class="narrow-column">ISA or NON-ISA?</th>
-              <th class="narrow-column">Planning</th>
-              <th class="narrow-column">Dev</th>
-              <th class="narrow-column">Stabilization</th>
-              <th class="narrow-column">Freeze</th>
-              <th class="narrow-column">Ratification-Ready</th>
-              <th class="narrow-column">Publication</th>
-              <th class="narrow-column">Planned Ratification Quarter</th>
-              <th class="narrow-column">Target Ratification Quarter</th>
-              <th class="narrow-column">Current Status</th>
-              <th class="narrow-column">Previous Status</th>
-              <th class="github-column">GitHub</th>
-              <th class="share-column">Share</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for index, row in data.iterrows() %} {% set current_phase,
-            next_phase = row['Status']|calculate_progress %}
-            <tr
-              class="{{ (row['Ratification Progress']|default('')).replace(' ', '-').lower() }}"
-            >
-              <td class="specification-column">
-                <a href="{{ row['Jira URL'] }}" target="_blank"
-                  >{{ row['Summary'] }}</a
-                >
-                <div class="tooltip-text">
-                  {{ row['Summary'] }}<br /><a
-                    href="{{ row['Jira URL'] }}"
-                    target="_blank"
-                    >View in Jira</a
-                  >
-                </div>
-              </td>
-              <td class="narrow-column">{{ row['ISA or NON-ISA?'] }}</td>
-              {% for phase in ['Planning', 'Development','Stabilization','Freeze',
-              'Ratification-Ready','Specification in Publication'] %}
-              <td class="text-center">
-                {% if phase == current_phase %}
-                <span
-                  class="in-progress"
-                  data-toggle="tooltip"
-                  title="Current Phase: {{ phase }}"
-                  style="white-space: nowrap"
-                  >In Progress</span
-                >
-                {% elif ['Inception', 'Planning', 'Development','Stabilization','Freeze',
-                'Ratification-Ready','Specification in Publication'].index(phase) < ['Inception','Planning',
-                'Development','Stabilization','Freeze',
-                'Ratification-Ready','Specification in Publication'].index(current_phase) %}
-                <span
-                  class="bg-completed"
-                  data-toggle="tooltip"
-                  title="Completed Phase: {{ phase }}"
-                  >✔</span
-                >
-                {% else %}
-                <span
-                  class="bg-upcoming"
-                  data-toggle="tooltip"
-                  title="Upcoming Phase: {{ phase }}"
-                  >...</span
-                >
-                {% endif %}
-              </td>
-              {% endfor %}
-              <td class="narrow-column">
-                {{ row['Planned Ratification Quarter'] }}
-              </td>
-              <td class="narrow-column">
-                {{ row['Trending Ratification Quarter'] }}
-              </td>
-              <td class="narrow-column">{{ row['Ratification Progress'] }}</td>
-              <td class="narrow-column">
-                {{ row['Previous Ratification Progress'] }}
-              </td>
-              <td>
-                {% if row['GitHub'] %}
-                <a href="{{ row['GitHub'] }}" target="_blank">
-                  <img
-                    src="static/github-mark.svg"
-                    alt="GitHub Logo"
-                    width="20"
-                    height="20"
-                    style="vertical-align: middle"
-                  />
-                </a>
-                {% else %} N/A {% endif %}
-              </td>
-              <td class="narrow-column">
-                <a
-                  href="javascript:void(0);"
-                  onclick="generateEmail(this);"
-                  title="Share"
-                  style="background: none; border: none; padding: 0"
-                >
-                  <img
-                    src="static/paper-plane-2563.svg"
-                    alt="Share"
-                    width="16"
-                    height="16"
-                    style="vertical-align: middle"
-                  />
-                </a>
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-      <div id="countdown"></div>
+<body>
+  <div class="container">
+    <h2></h2>
+    <div id="header">
+      <div id="last-updated">Last updated: {{ last_updated }}</div>
+      <button id="save-button" class="btn btn-primary" onclick="saveAsImage()">
+        Save as Image
+      </button>
     </div>
-    <script>
-      function filterTable() {
-        var input, filter, table, tr, td, i, txtValue;
-        input = document.getElementById("searchInput");
-        filter = input.value.toUpperCase();
-        table = document.querySelector("table tbody");
-        tr = table.getElementsByTagName("tr");
 
-        for (i = 0; i < tr.length; i++) {
-          td = tr[i].getElementsByTagName("td")[0];
-          if (td) {
-            txtValue = td.textContent || td.innerText;
-            if (txtValue.toUpperCase().indexOf(filter) > -1) {
-              tr[i].style.display = "";
-            } else {
-              tr[i].style.display = "none";
-            }
+    <!-- Timeline for quarters -->
+    <div class="timeline">
+      <div class="timeline-fill">
+        <div class="timeline-fill-past" id="timelineFillPast"></div>
+      </div>
+      <div class="timeline-point"><span>Q1</span></div>
+      <div class="timeline-point"><span>Q2</span></div>
+      <div class="timeline-point"><span>Q3</span></div>
+      <div class="timeline-point"><span>Q4</span></div>
+    </div>
+
+    <!-- Search bar -->
+    <div id="searchContainer">
+      <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Search for specifications..." />
+    </div>
+
+    <!-- Table displaying specifications -->
+    <div class="table-container">
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th class="specification-column">Specification</th>
+            <th class="narrow-column">ISA or NON-ISA?</th>
+            <th class="narrow-column">Planning</th>
+            <th class="narrow-column">Dev</th>
+            <th class="narrow-column">Stabilization</th>
+            <th class="narrow-column">Freeze</th>
+            <th class="narrow-column">Ratification-Ready</th>
+            <th class="narrow-column">Publication</th>
+            <th class="narrow-column">Planned Ratification Quarter</th>
+            <th class="narrow-column">Target Ratification Quarter</th>
+            <th class="narrow-column">Current Status</th>
+            <th class="narrow-column">Previous Status</th>
+            <th class="github-column">GitHub</th>
+            <th class="share-column">Share</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for index, row in data.iterrows() %} {% set current_phase,
+          next_phase = row['Status']|calculate_progress %}
+          <tr class="{{ (row['Ratification Progress']|default('')).replace(' ', '-').lower() }}">
+            <td class="specification-column">
+              <a href="{{ row['Jira URL'] }}" target="_blank">{{ row['Summary'] }}</a>
+              <div class="tooltip-text">
+                {{ row['Summary'] }}<br /><a href="{{ row['Jira URL'] }}" target="_blank">View in Jira</a>
+              </div>
+            </td>
+            <td class="narrow-column">{{ row['ISA or NON-ISA?'] }}</td>
+            {% for phase in ['Planning', 'Development','Stabilization','Freeze',
+            'Ratification-Ready','Specification in Publication'] %}
+            <td class="text-center">
+              {% if phase == current_phase %}
+              <span class="in-progress" data-toggle="tooltip" title="Current Phase: {{ phase }}"
+                style="white-space: nowrap">In Progress</span>
+              {% elif ['Inception', 'Planning', 'Development','Stabilization','Freeze',
+              'Ratification-Ready','Specification in Publication'].index(phase) < ['Inception','Planning', 'Development'
+                ,'Stabilization','Freeze', 'Ratification-Ready' ,'Specification in Publication'].index(current_phase) %}
+                <span class="bg-completed" data-toggle="tooltip" title="Completed Phase: {{ phase }}">✔</span>
+                {% else %}
+                <span class="bg-upcoming" data-toggle="tooltip" title="Upcoming Phase: {{ phase }}">...</span>
+                {% endif %}
+            </td>
+            {% endfor %}
+            <td class="narrow-column">
+              {{ row['Planned Ratification Quarter'] }}
+            </td>
+            <td class="narrow-column">
+              {{ row['Trending Ratification Quarter'] }}
+            </td>
+            <td class="narrow-column">{{ row['Ratification Progress'] }}</td>
+            <td class="narrow-column">
+              {{ row['Previous Ratification Progress'] }}
+            </td>
+            <td>
+              {% if row['GitHub'] %}
+              <a href="{{ row['GitHub'] }}" target="_blank">
+                <img src="static/github-mark.svg" alt="GitHub Logo" width="20" height="20"
+                  style="vertical-align: middle" />
+              </a>
+              {% else %} N/A {% endif %}
+            </td>
+            <td class="narrow-column">
+              <a href="javascript:void(0);" onclick="generateEmail(this);" title="Share"
+                style="background: none; border: none; padding: 0">
+                <img src="static/paper-plane-2563.svg" alt="Share" width="16" height="16"
+                  style="vertical-align: middle" />
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div id="countdown"></div>
+  </div>
+  <script>
+    function filterTable() {
+      var input, filter, table, tr, td, i, txtValue;
+      input = document.getElementById("searchInput");
+      filter = input.value.toUpperCase();
+      table = document.querySelector("table tbody");
+      tr = table.getElementsByTagName("tr");
+
+      for (i = 0; i < tr.length; i++) {
+        td = tr[i].getElementsByTagName("td")[0];
+        if (td) {
+          txtValue = td.textContent || td.innerText;
+          if (txtValue.toUpperCase().indexOf(filter) > -1) {
+            tr[i].style.display = "";
+          } else {
+            tr[i].style.display = "none";
           }
         }
       }
+    }
 
-      $(function () {
-        $('[data-toggle="tooltip"]').tooltip();
-      });
-    </script>
-  </body>
+    $(function () {
+      $('[data-toggle="tooltip"]').tooltip();
+    });
+  </script>
+</body>
+
 </html>
