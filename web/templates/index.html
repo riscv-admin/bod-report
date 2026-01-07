@@ -268,15 +268,36 @@
       justify-content: center;
       align-items: center;
       margin: 40px 0 20px;
+      gap: 12px;
+      flex-wrap: wrap;
     }
 
     #searchInput {
       width: 50%;
+      min-width: 260px;
       padding: 10px;
       border-radius: 50px;
       border: 1px solid #ccc;
       font-size: 14px;
       font-family: "Open Sans", sans-serif;
+    }
+
+    .bod-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: #444;
+      background: #f6f6f6;
+      border: 1px solid #ddd;
+      border-radius: 999px;
+      padding: 6px 12px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .bod-toggle input {
+      margin: 0;
     }
 
     /* -------------------------------------------------------------- */
@@ -630,7 +651,11 @@ This email was generated using the RISC-V Specification Dashboard. For more info
 
     <!-- Search bar -->
     <div id="searchContainer">
-      <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Search for specifications..." />
+      <input type="text" id="searchInput" oninput="filterTable()" placeholder="Search for specifications..." />
+      <label class="bod-toggle">
+        <input type="checkbox" id="bodOnly" onchange="filterTable()" />
+        Show BoD Report
+      </label>
     </div>
 
     <!-- Table displaying specifications -->
@@ -657,7 +682,8 @@ This email was generated using the RISC-V Specification Dashboard. For more info
         <tbody>
           {% for index, row in data.iterrows() %} {% set current_phase,
           next_phase = row['Status']|calculate_progress %}
-          <tr class="{{ (row['Ratification Progress']|default('')).replace(' ', '-').lower() }}">
+          <tr class="{{ (row['Ratification Progress']|default('')).replace(' ', '-').lower() }}"
+            data-bod="{{ 'true' if row['BoD Report Flag'] else 'false' }}">
             <td class="specification-column">
               <a href="{{ row['Jira URL'] }}" target="_blank">{{ row['Summary'] }}</a>
               <div class="tooltip-text">
@@ -714,17 +740,23 @@ This email was generated using the RISC-V Specification Dashboard. For more info
   </div>
   <script>
     function filterTable() {
-      var input, filter, table, tr, td, i, txtValue;
+      var input, filter, table, tr, td, i, txtValue, bodOnly, bodFilter;
       input = document.getElementById("searchInput");
       filter = input.value.toUpperCase();
       table = document.querySelector("table tbody");
       tr = table.getElementsByTagName("tr");
+      bodOnly = document.getElementById("bodOnly");
+      bodFilter = bodOnly && bodOnly.checked;
 
       for (i = 0; i < tr.length; i++) {
         td = tr[i].getElementsByTagName("td")[0];
         if (td) {
           txtValue = td.textContent || td.innerText;
-          if (txtValue.toUpperCase().indexOf(filter) > -1) {
+          var isBod = tr[i].getAttribute("data-bod") === "true";
+          if (
+            txtValue.toUpperCase().indexOf(filter) > -1 &&
+            (!bodFilter || isBod)
+          ) {
             tr[i].style.display = "";
           } else {
             tr[i].style.display = "none";

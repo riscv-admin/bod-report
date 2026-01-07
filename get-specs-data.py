@@ -12,6 +12,29 @@ from datetime import datetime
 from atlassian import Jira
 
 
+def extract_field_value(value):
+    if value is None:
+        return ""
+    if isinstance(value, dict):
+        return value.get('value') or value.get('name') or value.get('label') or ""
+    if isinstance(value, list):
+        parts = [extract_field_value(item) for item in value]
+        return ", ".join([part for part in parts if part])
+    return str(value)
+
+
+def normalize_bod_report_value(value):
+    text = extract_field_value(value).strip()
+    if not text:
+        return "No"
+    lowered = text.lower()
+    if lowered in ["yes", "true", "y", "1"]:
+        return "Yes"
+    if lowered in ["no", "false", "n", "0"]:
+        return "No"
+    return text
+
+
 # Function to parse and extract issue details
 def parse_issues(issues):
     parsed_issues = []
@@ -44,6 +67,7 @@ def parse_issues(issues):
         github = (
             fields.get('customfield_10043', {}) if fields.get('customfield_10043') else "Not Set Yet"
         )
+        bod_report = normalize_bod_report_value(fields.get('customfield_10037'))
 
         # Collect issue information
         parsed_issues.append({
@@ -52,6 +76,7 @@ def parse_issues(issues):
             'Key': issue_key,
             'Summary': summary,
             'Status': status,
+            'BoD Report': bod_report,
             'GitHub': github,
             'ISA or NON-ISA': isa_or_non_isa,
             'Baseline Ratification Quarter': baseline_ratification_quarter,
@@ -79,8 +104,8 @@ def get_data_from_jira(jira_token, jira_email):
 
     # JQL query to fetch required issues
     jql = ('project = RVS AND '
-           'issuetype not in subTaskIssueTypes() AND '
-           '"BoD Report" = Yes ORDER BY priority DESC, updated DESC')
+           'issuetype not in subTaskIssueTypes() '
+           'ORDER BY priority DESC, updated DESC')
 
     # Extract issues from the JSON data
     all_issues = jira.jql(jql)
@@ -99,6 +124,7 @@ def get_data_from_jira(jira_token, jira_email):
             'Jira URL',
             'Summary',
             'Status',
+            'BoD Report',
             'ISA or NON-ISA?',
             'GitHub',
             'Baseline Ratification Quarter',
@@ -114,6 +140,7 @@ def get_data_from_jira(jira_token, jira_email):
                     issue['URL'],
                     issue['Summary'],
                     issue['Status'],
+                    issue['BoD Report'],
                     issue['ISA or NON-ISA'],
                     issue['GitHub'],
                     issue['Baseline Ratification Quarter'],

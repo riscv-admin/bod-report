@@ -30,6 +30,7 @@ EXPECTED_COLUMNS = [
     "Target Ratification Quarter",
     "Ratification Progress",
     "Previous Ratification Progress",
+    "BoD Report",
 ]
 
 # --- Flask -----------------------------------------------------------------------
@@ -47,6 +48,19 @@ def remove_existing_csv_files() -> None:
                 os.remove(file)
             except Exception as e:
                 print(f"Warning: failed to remove {file}: {e}")
+
+
+def is_bod_report(value) -> bool:
+    if value is None:
+        return False
+    if isinstance(value, float) and pd.isna(value):
+        return False
+    normalized = str(value).strip().lower()
+    if normalized in ["yes", "true", "y", "1"]:
+        return True
+    if normalized in ["no", "false", "n", "0", ""]:
+        return False
+    return "yes" in normalized
 
 
 def download_csv_from_github() -> Optional[str]:
@@ -89,33 +103,33 @@ def safe_read_csv(csv_filename: str) -> pd.DataFrame:
     """
     User-proof CSV loader:
     - first try strict/fast parsing,
-    - on failure, retry with more tolerant settings,
-    - finally, try single-quote as quotechar (for hand-edited rows).
+    - on failure, retry with single-quote as quotechar,
+    - finally, retry with more tolerant settings.
     """
     try:
         # First attempt: normal, fast path
         return pd.read_csv(csv_filename)
     except pd.errors.ParserError as e:
         print(f"[WARN] Strict CSV parse failed: {e}")
-        print("[INFO] Retrying with engine='python', on_bad_lines='warn'")
+        print("[INFO] Retrying with engine='python', quotechar=\"'\"")
 
         try:
             df = pd.read_csv(
                 csv_filename,
                 engine="python",
                 on_bad_lines="warn",  # or "skip" if you prefer to drop bad rows
+                quotechar="'",
             )
             return df
         except pd.errors.ParserError as e2:
             print(f"[WARN] Python engine parse failed: {e2}")
-            print("[INFO] Retrying with quotechar=\"'\" (single-quote fields)")
+            print("[INFO] Retrying with engine='python', on_bad_lines='warn'")
 
             # Last resort for cases like 'Packed Single Instruction, Multiple Data - SIMD (P)'
             df = pd.read_csv(
                 csv_filename,
                 engine="python",
                 on_bad_lines="warn",
-                quotechar="'",
             )
             return df
 
@@ -123,7 +137,8 @@ def safe_read_csv(csv_filename: str) -> pd.DataFrame:
 def load_data() -> Optional[pd.DataFrame]:
     """Load, normalize, sort."""
     try:
-        csv_filename = download_csv_from_github()
+        # csv_filename = download_csv_from_github()
+        csv_filename = "../specs_20260107_121735.csv"
         if not csv_filename:
             raise RuntimeError("CSV download failed, cannot load data.")
 
@@ -145,6 +160,11 @@ def load_data() -> Optional[pd.DataFrame]:
         # Normalize status strings
         if "Status" in df.columns:
             df["Status"] = df["Status"].fillna("").astype(str)
+
+        if "BoD Report" not in df.columns:
+            df["BoD Report"] = ""
+        df["BoD Report"] = df["BoD Report"].fillna("").astype(str)
+        df["BoD Report Flag"] = df["BoD Report"].apply(is_bod_report)
 
         # Sort by ratification progress + trending quarter
         sort_order = {"Late": 0, "Exposed": 1, "On Track": 2, "Completed": 3}
