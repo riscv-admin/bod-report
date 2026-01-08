@@ -163,3 +163,4 @@ cython_debug/
 
 # Other
 *.csv
+!web-ui/public/latest.csv
