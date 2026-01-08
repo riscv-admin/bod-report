@@ -7,8 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  actions: write
+  contents: write
 
 jobs:
   data-fetch:
@@ -17,6 +16,8 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GHTOKEN }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -72,11 +73,28 @@ jobs:
         env:
             GITHUB_TOKEN: ${{ secrets.GHTOKEN }}
 
-      - name: Trigger Pages Deploy
+      - name: Update latest CSV for UI
         if: steps.run_container.outcome == 'success' && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule')
         run: |
-          curl -X POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${{ secrets.GHTOKEN }}" \
-            https://api.github.com/repos/${{ github.repository }}/actions/workflows/deploy-pages.yaml/dispatches \
-            -d '{"ref":"main"}'
+          set -euo pipefail
+          latest_csv=$(ls -t specs_*.csv | head -n1 || true)
+          if [ -z "$latest_csv" ]; then
+            echo "No specs_*.csv found."
+            exit 1
+          fi
+          mkdir -p web-ui/public
+          cp "$latest_csv" web-ui/public/latest.csv
+          printf "updated_at=%s\nrun_id=%s\n" \
+            "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+            "${GITHUB_RUN_ID}" \
+            > web-ui/public/latest.csv.meta
+
+      - name: Commit latest CSV
+        if: steps.run_container.outcome == 'success' && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule')
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web-ui/public/latest.csv web-ui/public/latest.csv.meta
+          git commit -m "Update latest CSV" --allow-empty
+          git push origin HEAD:main

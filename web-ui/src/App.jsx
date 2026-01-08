@@ -332,6 +332,7 @@ function App() {
   const tableRef = useRef(null);
   const tableContainerRef = useRef(null);
   const assetBase = import.meta.env.BASE_URL || "/";
+          const latestCsvUrl = `${assetBase}latest.csv`;
 
   useEffect(() => {
     let isMounted = true;
@@ -382,24 +383,27 @@ function App() {
           return csvResponse.text();
         }
 
-        let csvText = "";
-        if (import.meta.env.DEV && LOCAL_CSV_URL) {
+        async function tryFetchCsv(url, label) {
+          if (!url) return "";
           try {
-            const localResponse = await fetch(LOCAL_CSV_URL, {
-              cache: "no-store",
-            });
-            if (localResponse.ok) {
-              csvText = await localResponse.text();
-            } else {
-              console.warn(
-                `Local CSV not found (${localResponse.status}); falling back to release`
-              );
+            const response = await fetch(url, { cache: "no-store" });
+            if (response.ok) {
+              return await response.text();
             }
+            console.warn(`${label} not found (${response.status}); trying next source`);
           } catch (err) {
-            console.warn("Local CSV fetch failed; falling back to release", err);
+            console.warn(`${label} fetch failed; trying next source`, err);
           }
+          return "";
         }
 
+        let csvText = "";
+        if (import.meta.env.DEV && LOCAL_CSV_URL) {
+          csvText = await tryFetchCsv(LOCAL_CSV_URL, "Local CSV");
+        }
+        if (!csvText) {
+          csvText = await tryFetchCsv(latestCsvUrl, "Deployed CSV");
+        }
         if (!csvText) {
           csvText = await fetchCsvFromRelease();
         }
