@@ -48,6 +48,7 @@ def parse_issues(issues):
         summary = fields.get('summary')
         status = fields.get('status', {}).get('name')
         isa_or_non_isa = fields.get('customfield_10042', {}).get('value')
+        updated = fields.get('updated')
 
         # Safely accessing custom fields with a fallback to "Not Planned Yet" if None
         baseline_ratification_quarter = (
@@ -77,6 +78,7 @@ def parse_issues(issues):
             'Summary': summary,
             'Status': status,
             'BoD Report': bod_report,
+            'Updated': updated,
             'GitHub': github,
             'ISA or NON-ISA': isa_or_non_isa,
             'Baseline Ratification Quarter': baseline_ratification_quarter,
@@ -125,6 +127,7 @@ def get_data_from_jira(jira_token, jira_email):
             'Summary',
             'Status',
             'BoD Report',
+            'Updated',
             'ISA or NON-ISA?',
             'GitHub',
             'Baseline Ratification Quarter',
@@ -141,6 +144,7 @@ def get_data_from_jira(jira_token, jira_email):
                     issue['Summary'],
                     issue['Status'],
                     issue['BoD Report'],
+                    issue['Updated'],
                     issue['ISA or NON-ISA'],
                     issue['GitHub'],
                     issue['Baseline Ratification Quarter'],
